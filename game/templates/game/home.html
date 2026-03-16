@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giddey</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            padding: 2rem;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            color: #fff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem;
+            color: #888;
+            font-size: 1.2rem;
+        }
+
+        /* Division accordion */
+        .division {
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #16213e;
+        }
+
+        .division-header {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: #0f3460;
+            color: #fff;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .division-header:hover { background: #1a4a7a; }
+
+        .division-header::after {
+            content: "\25B6";
+            font-size: 0.8rem;
+            transition: transform 0.3s;
+        }
+
+        .division.open .division-header::after {
+            transform: rotate(90deg);
+        }
+
+        .division-body {
+            display: none;
+            padding: 1rem;
+        }
+
+        .division.open .division-body { display: block; }
+
+        /* Team accordion (nested) */
+        .team {
+            margin-bottom: 0.75rem;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #1a1a2e;
+        }
+
+        .team-header {
+            width: 100%;
+            padding: 0.75rem 1.25rem;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            border: 1px solid #2a2a4a;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: background 0.2s;
+        }
+
+        .team-header:hover { background: #222244; }
+
+        .team-header .arrow {
+            font-size: 0.7rem;
+            transition: transform 0.3s;
+        }
+
+        .team.open .team-header .arrow {
+            transform: rotate(90deg);
+        }
+
+        .team-logo {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .team-body {
+            display: none;
+            padding: 0.75rem 1.25rem;
+        }
+
+        .team.open .team-body { display: block; }
+
+        /* Player table */
+        .players-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .players-table th,
+        .players-table td {
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #2a2a4a;
+        }
+
+        .players-table th {
+            color: #888;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .players-table tr:last-child td { border-bottom: none; }
+
+        .players-table tr:hover td { background: #222244; }
+
+        .player-img {
+            width: 36px;
+            height: 36px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .player-name { font-weight: 500; }
+
+        .no-players {
+            padding: 1rem;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Giddey</h1>
+
+    {% if not divisions %}
+        <div class="empty-state">No data yet. Add teams and players in the <a href="/admin/" style="color:#4ea8de;">admin panel</a>.</div>
+    {% endif %}
+
+    {% for division_name, teams in divisions.items %}
+    <div class="division">
+        <button class="division-header" onclick="this.parentElement.classList.toggle('open')">
+            {{ division_name }}
+            <span></span>
+        </button>
+        <div class="division-body">
+            {% for team in teams %}
+            <div class="team">
+                <button class="team-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span class="arrow">&#9654;</span>
+                    {% if team.logo_image %}
+                        <img class="team-logo" src="{{ team.logo_image }}" alt="{{ team }}">
+                    {% endif %}
+                    {{ team.city }} {{ team.name }}
+                </button>
+                <div class="team-body">
+                    {% if team.players.all %}
+                    <table class="players-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Name</th>
+                                <th>College</th>
+                                <th>Draft Year</th>
+                                <th>Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in team.players.all %}
+                            <tr>
+                                <td>
+                                    {% if player.image %}
+                                        <img class="player-img" src="{{ player.image }}" alt="{{ player }}">
+                                    {% endif %}
+                                </td>
+                                <td class="player-name">{{ player.first_name }} {{ player.last_name }}</td>
+                                <td>{{ player.college }}</td>
+                                <td>{{ player.draft_year }}</td>
+                                <td>{{ player.rating }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                        <div class="no-players">No players on this team.</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>
