@@ -784,9 +784,20 @@
         `;
 			}
 
+			function getAvailablePositions() {
+				const positions = [];
+				document.querySelectorAll('.hex-slot').forEach(slot => {
+					if (!slot.classList.contains('filled')) {
+						positions.push(slot.dataset.position);
+					}
+				});
+				return [...new Set(positions)];
+			}
+
 			async function fetchPlayers() {
 				const exclude = draftedPlayerIds.join(',');
-				const resp = await fetch('/api/random-players/?exclude=' + exclude);
+				const positions = getAvailablePositions().join(',');
+				const resp = await fetch(`/api/random-players/?exclude=${exclude}&round=${currentRound}&positions=${positions}`);
 				currentPool = await resp.json();
 				renderPool();
 			}
