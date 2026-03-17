@@ -5,7 +5,7 @@ echo "Running migrations..."
 python manage.py migrate --noinput
 
 echo "Running player scrape in background..."
-python manage.py scrape_nba &
+(python manage.py scrape_nba || echo "Scrape failed, will retry at next cron run") &
 
 # Set up daily cron job at 4 AM UTC
 echo "0 4 * * * cd /app && python manage.py scrape_nba >> /var/log/cron.log 2>&1" | crontab -

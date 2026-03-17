@@ -1,7 +1,7 @@
 import re
 import time
 
-import cloudscraper
+import requests
 from bs4 import BeautifulSoup
 from django.core.management.base import BaseCommand
 
@@ -50,7 +50,16 @@ class Command(BaseCommand):
     help = "Scrape NBA player and team data from 2kratings.com"
 
     def handle(self, *args, **options):
-        self.scraper = cloudscraper.create_scraper()
+        self.scraper = requests.Session()
+        self.scraper.headers.update({
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/131.0.0.0 Safari/537.36"
+            ),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        })
 
         # Step 1: Scrape the current-teams page table for the 30 team links
         self.stdout.write("Fetching current team links...")
