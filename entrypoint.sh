@@ -4,8 +4,8 @@ set -e
 echo "Running migrations..."
 python manage.py migrate --noinput
 
-echo "Running player scrape..."
-python manage.py scrape_nba
+echo "Running player scrape in background..."
+python manage.py scrape_nba &
 
 # Set up daily cron job at 4 AM UTC
 echo "0 4 * * * cd /app && python manage.py scrape_nba >> /var/log/cron.log 2>&1" | crontab -
