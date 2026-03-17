@@ -119,6 +119,14 @@
             background: #9a5520;
         }
 
+        .hex-slot.dragover-invalid {
+            background: #5a1a1a;
+        }
+
+        html.is-dragging, html.is-dragging * {
+            cursor: grabbing !important;
+        }
+
         .hex-slot.filled {
             padding: 0;
         }
@@ -404,8 +412,7 @@
         }
 
         .pool-card.dragging {
-            opacity: 0.5;
-            transform: scale(0.95);
+            visibility: hidden;
         }
 
         .pool-card .card-lower .player-name {
@@ -677,6 +684,12 @@
     let dragClone = null;
     let dragSourceSlot = null; // track if dragging from a grid slot
 
+    function playerMatchesSlot(player, slot) {
+        const slotPos = slot.dataset.position;
+        const playerPositions = player.position.split('/').map(p => p.trim());
+        return playerPositions.includes(slotPos);
+    }
+
     function getPointer(e) {
         if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
         return { x: e.clientX, y: e.clientY };
@@ -726,7 +739,7 @@
         document.body.appendChild(dragClone);
 
         el.classList.add('dragging');
-        document.body.style.cursor = 'grabbing';
+        document.documentElement.classList.add('is-dragging');
 
         document.addEventListener('mousemove', handleDragMove);
         document.addEventListener('mouseup', handleDragEnd);
@@ -741,14 +754,28 @@
         dragClone.style.left = (pos.x - dragClone.offsetWidth / 2) + 'px';
         dragClone.style.top = (pos.y - dragClone.offsetHeight / 2) + 'px';
 
-        document.querySelectorAll('.hex-slot').forEach(s => s.classList.remove('dragover'));
+        document.querySelectorAll('.hex-slot').forEach(s => {
+            s.classList.remove('dragover');
+            s.classList.remove('dragover-invalid');
+        });
         dragClone.style.display = 'none';
         const el = document.elementFromPoint(pos.x, pos.y);
         dragClone.style.display = '';
         if (el) {
             const slot = el.closest('.hex-slot');
-            if (slot && slot !== dragSourceSlot) {
-                slot.classList.add('dragover');
+            if (slot && slot !== dragSourceSlot && dragData) {
+                if (playerMatchesSlot(dragData, slot)) {
+                    // For swaps, also check the other direction
+                    const targetIndex = slot.dataset.slot;
+                    const targetPlayer = draftedSlots[targetIndex];
+                    if (dragSourceSlot && targetPlayer && !playerMatchesSlot(targetPlayer, dragSourceSlot)) {
+                        slot.classList.add('dragover-invalid');
+                    } else {
+                        slot.classList.add('dragover');
+                    }
+                } else {
+                    slot.classList.add('dragover-invalid');
+                }
             }
         }
     }
@@ -766,33 +793,38 @@
 
         if (el) {
             const targetSlot = el.closest('.hex-slot');
-            if (targetSlot && targetSlot !== dragSourceSlot) {
+            if (targetSlot && targetSlot !== dragSourceSlot && playerMatchesSlot(dragData, targetSlot)) {
                 if (dragSourceSlot) {
                     // Moving from one slot to another — swap
                     const sourceIndex = dragSourceSlot.dataset.slot;
                     const targetIndex = targetSlot.dataset.slot;
                     const targetPlayer = draftedSlots[targetIndex] || null;
 
-                    // Place dragged player in target
-                    draftedSlots[targetIndex] = dragData;
-                    targetSlot.innerHTML = buildCardHTML(dragData, true);
-                    targetSlot.classList.add('filled');
-                    makeSlotDraggable(targetSlot);
-
-                    // Place target player in source (or clear it)
-                    if (targetPlayer) {
-                        draftedSlots[sourceIndex] = targetPlayer;
-                        dragSourceSlot.innerHTML = buildCardHTML(targetPlayer, true);
-                        dragSourceSlot.classList.add('filled');
-                        makeSlotDraggable(dragSourceSlot);
+                    // If swapping, the target player must also fit the source slot
+                    if (targetPlayer && !playerMatchesSlot(targetPlayer, dragSourceSlot)) {
+                        // Invalid swap — do nothing
                     } else {
-                        delete draftedSlots[sourceIndex];
-                        const label = document.createElement('span');
-                        label.className = 'empty-label';
-                        label.textContent = 'G';
-                        dragSourceSlot.innerHTML = '';
-                        dragSourceSlot.appendChild(label);
-                        dragSourceSlot.classList.remove('filled');
+                        // Place dragged player in target
+                        draftedSlots[targetIndex] = dragData;
+                        targetSlot.innerHTML = buildCardHTML(dragData, true);
+                        targetSlot.classList.add('filled');
+                        makeSlotDraggable(targetSlot);
+
+                        // Place target player in source (or clear it)
+                        if (targetPlayer) {
+                            draftedSlots[sourceIndex] = targetPlayer;
+                            dragSourceSlot.innerHTML = buildCardHTML(targetPlayer, true);
+                            dragSourceSlot.classList.add('filled');
+                            makeSlotDraggable(dragSourceSlot);
+                        } else {
+                            delete draftedSlots[sourceIndex];
+                            const label = document.createElement('span');
+                            label.className = 'empty-label';
+                            label.textContent = 'G';
+                            dragSourceSlot.innerHTML = '';
+                            dragSourceSlot.appendChild(label);
+                            dragSourceSlot.classList.remove('filled');
+                        }
                     }
                 } else if (!targetSlot.classList.contains('filled')) {
                     // Dragging from pool to empty slot
@@ -801,14 +833,17 @@
             }
         }
 
-        document.querySelectorAll('.hex-slot').forEach(s => s.classList.remove('dragover'));
+        document.querySelectorAll('.hex-slot').forEach(s => {
+            s.classList.remove('dragover');
+            s.classList.remove('dragover-invalid');
+        });
         cleanupDrag();
     }
 
     function cleanupDrag() {
         if (dragClone && dragClone.parentNode) dragClone.parentNode.removeChild(dragClone);
         if (dragEl) dragEl.classList.remove('dragging');
-        document.body.style.cursor = '';
+        document.documentElement.classList.remove('is-dragging');
         dragData = null;
         dragEl = null;
         dragClone = null;
@@ -853,6 +888,7 @@
         document.querySelectorAll('.pool-card').forEach(card => {
             card.classList.add('disabled');
         });
+        if (dragEl) dragEl.style.visibility = 'hidden';
 
         updateScore();
     }
