@@ -1,5 +1,7 @@
 FROM python:3.12-slim
 
+RUN apt-get update && apt-get install -y cron && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY requirements.txt .
@@ -9,6 +11,8 @@ COPY . .
 
 RUN python manage.py collectstatic --noinput 2>/dev/null || true
 
+RUN chmod +x entrypoint.sh
+
 EXPOSE 8000
 
-CMD sh -c "python manage.py migrate --noinput && gunicorn giddey.wsgi:application --bind 0.0.0.0:8000"
+CMD ["./entrypoint.sh"]
