@@ -243,13 +243,11 @@ class Command(BaseCommand):
         first_name = name_parts[0] if name_parts else ""
         last_name = name_parts[1] if len(name_parts) > 1 else ""
 
-        # Player image - find img with data-src, not the 80x80 thumbnail
+        # Player image from .profile-photo class
         image_url = ""
-        for img in soup.select("img[data-src]"):
-            data_src = img.get("data-src", "")
-            if "2K-Rating" in data_src and "80x80" not in data_src:
-                image_url = data_src
-                break
+        profile_img = soup.select_one("img.profile-photo")
+        if profile_img:
+            image_url = profile_img.get("src", "")
 
         # Position
         position = ""

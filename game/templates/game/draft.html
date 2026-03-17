@@ -95,9 +95,9 @@
         }
 
         .hex-slot {
-            width: 100px;
-            height: 150px;
-            clip-path: polygon(50% 0%, 100% 20%, 100% 80%, 50% 100%, 0% 80%, 0% 20%);
+            width: 82px;
+            height: 115px;
+            clip-path: polygon(50% 0%, 100% 15%, 100% 85%, 50% 100%, 0% 85%, 0% 15%);
             background: #7a3a10;
             display: flex;
             align-items: center;
@@ -119,6 +119,10 @@
             background: #9a5520;
         }
 
+        .hex-slot.filled {
+            padding: 0;
+        }
+
         .hex-slot.filled .empty-label {
             display: none;
         }
@@ -131,91 +135,214 @@
             letter-spacing: 0.05em;
         }
 
-        /* ── Player Card (in slot) ── */
-        .card-in-slot {
-            width: 100%;
-            height: 100%;
-            clip-path: polygon(50% 0%, 100% 20%, 100% 80%, 50% 100%, 0% 80%, 0% 20%);
+        /* ── Tier color definitions ── */
+        .tier-platinum {
+            --border-light: #e0c0ff;
+            --border-dark: #7c3aed;
+            --upper-bg: #5b21b6;
+            --lower-bg: #1e0a3e;
+            --divider-color: #9056d0;
+            --badge-bg: #9333ea;
+        }
+        .tier-gold {
+            --border-light: #ffe066;
+            --border-dark: #a07010;
+            --upper-bg: #8a6010;
+            --lower-bg: #352408;
+            --divider-color: #b8920b;
+            --badge-bg: #c49000;
+        }
+        .tier-silver {
+            --border-light: #d8d8d8;
+            --border-dark: #707070;
+            --upper-bg: #585858;
+            --lower-bg: #222222;
+            --divider-color: #808080;
+            --badge-bg: #808890;
+        }
+        .tier-bronze {
+            --border-light: #e0a060;
+            --border-dark: #6b3a12;
+            --upper-bg: #6b3a12;
+            --lower-bg: #241008;
+            --divider-color: #8b5a2a;
+            --badge-bg: #a06028;
+        }
+
+        /* ── Card structure (shared between pool and slot) ── */
+        .card-inner {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            clip-path: polygon(50% 0%, 100% 15%, 100% 85%, 50% 100%, 0% 85%, 0% 15%);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            filter: drop-shadow(0 3px 8px rgba(0,0,0,0.7));
+        }
+
+        .card-upper {
+            flex: 50;
+            background: var(--upper-bg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-upper .team-logo-bg {
+            position: absolute;
+            left: 5%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 42%;
+            height: 55%;
+            object-fit: contain;
+            opacity: 1;
+            pointer-events: none;
+        }
+
+        .card-upper .player-photo {
+            position: absolute;
+            right: 2%;
+            bottom: 0;
+            width: 58%;
+            height: 88%;
+            object-fit: cover;
+            object-position: top center;
+            z-index: 1;
+            filter: drop-shadow(-3px 2px 6px rgba(0,0,0,0.6));
+        }
+
+        .card-badge-row {
+            height: 1px;
+            background: var(--divider-color);
+            position: relative;
+            z-index: 3;
+            box-shadow: 0 0 6px rgba(0,0,0,0.6);
+        }
+
+        .card-badge-row .position-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.5rem;
+            font-weight: 800;
+            color: #fff;
+            background: var(--badge-bg);
+            padding: 3px 12px;
+            clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            z-index: 4;
+        }
+
+        .card-lower {
+            flex: 50;
+            background: var(--lower-bg);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            position: relative;
-            overflow: hidden;
-            padding: 0.3rem;
+            padding: 6px 1px 1px;
+            gap: 0;
         }
 
-        .card-in-slot .team-logo-bg {
-            position: absolute;
-            top: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 50px;
-            object-fit: contain;
-            opacity: 0.25;
-            pointer-events: none;
-        }
-
-        .card-in-slot .player-photo {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255,255,255,0.3);
-            position: relative;
-            z-index: 1;
-            margin-top: 8px;
-        }
-
-        .card-in-slot .position-badge {
-            font-size: 0.5rem;
-            font-weight: 800;
-            color: #fff;
-            background: rgba(0,0,0,0.5);
-            padding: 1px 6px;
-            border-radius: 3px;
-            position: relative;
-            z-index: 1;
-            margin-top: 2px;
-        }
-
-        .card-in-slot .player-name {
-            font-size: 0.55rem;
+        .card-lower .player-name {
+            font-size: 0.6rem;
             font-weight: 800;
             color: #fff;
             text-transform: uppercase;
             text-align: center;
-            position: relative;
-            z-index: 1;
-            margin-top: 2px;
-            line-height: 1.1;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            line-height: 1.15;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
-        .card-in-slot .player-division {
+        .card-lower .player-division {
             font-size: 0.45rem;
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.75);
             text-transform: uppercase;
-            position: relative;
-            z-index: 1;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            margin-top: 1px;
         }
 
-        .card-in-slot .player-year {
-            font-size: 0.55rem;
-            font-weight: 800;
+        .card-lower .player-year {
+            font-size: 0.75rem;
+            font-weight: 900;
             color: #fff;
-            position: relative;
-            z-index: 1;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            margin-top: 1px;
         }
 
-        /* Tier backgrounds */
-        .tier-platinum { background: linear-gradient(135deg, #7c3aed, #a855f7, #ec4899); }
-        .tier-gold { background: linear-gradient(135deg, #b8860b, #f59e0b, #d97706); }
-        .tier-silver { background: linear-gradient(135deg, #6b7280, #9ca3af, #6b7280); }
-        .tier-bronze { background: linear-gradient(135deg, #92400e, #b45309, #78350f); }
+        .card-lower .stars {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 1px;
+            margin-top: 2px;
+        }
+
+        .card-lower .stars .star {
+            font-size: 0.5rem;
+            color: #facc15;
+            line-height: 1;
+            display: block;
+        }
+
+        .card-lower .stars .star:nth-child(1) { margin-bottom: 4px; }
+        .card-lower .stars .star:nth-child(2) { margin-bottom: 2px; }
+        .card-lower .stars .star:nth-child(3) { margin-bottom: 0; }
+        .card-lower .stars .star:nth-child(4) { margin-bottom: 2px; }
+        .card-lower .stars .star:nth-child(5) { margin-bottom: 4px; }
+
+        /* ── Slot card sizing ── */
+        .card-in-slot {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: linear-gradient(135deg, var(--border-light) 0%, var(--border-dark) 50%, var(--border-light) 100%);
+        }
+
+        .card-in-slot .card-inner {
+            top: 3px;
+            left: 3px;
+            right: 3px;
+            bottom: 3px;
+        }
+
+        .card-in-slot .card-badge-row .position-badge {
+            font-size: 0.42rem;
+            padding: 1px 5px;
+        }
+
+        .card-in-slot .card-lower {
+            padding: 5px 3px 1px;
+        }
+
+        .card-in-slot .card-lower .player-name {
+            font-size: 0.5rem;
+        }
+
+        .card-in-slot .card-lower .player-division {
+            font-size: 0.35rem;
+        }
+
+        .card-in-slot .card-lower .player-year {
+            font-size: 0.55rem;
+        }
+
+        .card-in-slot .card-lower .stars .star {
+            font-size: 0.38rem;
+        }
+
+        .card-in-slot .card-lower .stars .star:nth-child(1) { margin-bottom: 3px; }
+        .card-in-slot .card-lower .stars .star:nth-child(2) { margin-bottom: 1px; }
+        .card-in-slot .card-lower .stars .star:nth-child(3) { margin-bottom: 0; }
+        .card-in-slot .card-lower .stars .star:nth-child(4) { margin-bottom: 1px; }
+        .card-in-slot .card-lower .stars .star:nth-child(5) { margin-bottom: 3px; }
 
         /* ── Draft Area (bottom) ── */
         .draft-area {
@@ -240,25 +367,20 @@
             display: flex;
             justify-content: center;
             gap: 1rem;
-            min-height: 160px;
+            min-height: 150px;
             align-items: center;
         }
 
         /* ── Pool Card ── */
         .pool-card {
-            width: 120px;
-            height: 165px;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            width: 105px;
+            height: 148px;
+            clip-path: polygon(50% 0%, 100% 15%, 100% 85%, 50% 100%, 0% 85%, 0% 15%);
+            background: linear-gradient(135deg, var(--border-light) 0%, var(--border-dark) 50%, var(--border-light) 100%);
             position: relative;
-            overflow: hidden;
             cursor: grab;
             transition: transform 0.15s, opacity 0.3s;
             user-select: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
 
         .pool-card:hover {
@@ -280,87 +402,23 @@
             transform: scale(0.95);
         }
 
-        .pool-card .team-logo-bg {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 65px;
-            height: 65px;
-            object-fit: contain;
-            opacity: 0.2;
-            pointer-events: none;
+        .pool-card .card-lower .player-name {
+            font-size: 0.75rem;
         }
 
-        .pool-card .player-photo {
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255,255,255,0.3);
-            position: relative;
-            z-index: 1;
-            margin-top: 10px;
+        .pool-card .card-lower .player-year {
+            font-size: 0.8rem;
         }
 
-        .pool-card .position-badge {
-            font-size: 0.6rem;
-            font-weight: 800;
-            color: #fff;
-            background: rgba(0,0,0,0.5);
-            padding: 2px 8px;
-            border-radius: 3px;
-            position: relative;
-            z-index: 1;
-            margin-top: 4px;
-        }
-
-        .pool-card .player-name {
-            font-size: 0.7rem;
-            font-weight: 800;
-            color: #fff;
-            text-transform: uppercase;
-            text-align: center;
-            position: relative;
-            z-index: 1;
-            margin-top: 4px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
-
-        .pool-card .player-division {
+        .pool-card .card-lower .stars .star {
             font-size: 0.55rem;
-            color: rgba(255,255,255,0.8);
-            text-transform: uppercase;
-            position: relative;
-            z-index: 1;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
-        .pool-card .player-year {
-            font-size: 0.7rem;
-            font-weight: 800;
-            color: #fff;
-            position: relative;
-            z-index: 1;
-            margin-top: 1px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
-
-        .pool-card .stars {
-            font-size: 0.5rem;
-            color: #facc15;
-            position: relative;
-            z-index: 1;
-            margin-top: 2px;
-        }
-
-        .card-in-slot .stars {
-            font-size: 0.4rem;
-            color: #facc15;
-            position: relative;
-            z-index: 1;
-            margin-top: 1px;
-        }
+        .pool-card .card-lower .stars .star:nth-child(1) { margin-bottom: 5px; }
+        .pool-card .card-lower .stars .star:nth-child(2) { margin-bottom: 2px; }
+        .pool-card .card-lower .stars .star:nth-child(3) { margin-bottom: 0; }
+        .pool-card .card-lower .stars .star:nth-child(4) { margin-bottom: 2px; }
+        .pool-card .card-lower .stars .star:nth-child(5) { margin-bottom: 5px; }
 
         /* ── Next Round Button ── */
         .next-round-btn {
@@ -537,14 +595,19 @@
     }
 
     function getStars(rating) {
-        if (rating >= 88) return 5;
-        if (rating >= 82) return 4;
-        if (rating >= 76) return 3;
-        return 2;
+        if (rating >= 88) return 4;
+        if (rating >= 82) return 3;
+        if (rating >= 76) return 2;
+        return 1;
     }
 
     function starString(count) {
-        return '★'.repeat(count) + '☆'.repeat(5 - count);
+        let html = '';
+        for (let i = 0; i < 5; i++) {
+            const filled = i < count;
+            html += `<span class="star">${filled ? '★' : '☆'}</span>`;
+        }
+        return html;
     }
 
     function buildCardHTML(player, isSlot) {
@@ -556,13 +619,21 @@
 
         return `
             <div class="${isSlot ? 'card-in-slot' : ''} ${tierClass}">
-                <img class="team-logo-bg" src="${player.team_logo}" alt="" onerror="this.style.display='none'">
-                <img class="player-photo" src="${player.image}" alt="${player.first_name} ${player.last_name}" onerror="this.style.display='none'">
-                <div class="position-badge">${player.position}</div>
-                <div class="player-name">${initial}. ${lastName}</div>
-                <div class="player-division">${player.team_division}</div>
-                <div class="player-year">${player.draft_year}</div>
-                <div class="stars">${starString(stars)}</div>
+                <div class="card-inner">
+                    <div class="card-upper">
+                        <img class="team-logo-bg" src="${player.team_logo}" alt="" onerror="this.style.display='none'">
+                        <img class="player-photo" src="${player.image}" alt="${player.first_name} ${player.last_name}" onerror="this.style.display='none'">
+                    </div>
+                    <div class="card-badge-row">
+                        <div class="position-badge">${player.position}</div>
+                    </div>
+                    <div class="card-lower">
+                        <div class="player-name">${initial}. ${lastName}</div>
+                        <div class="player-division">${player.team_division}</div>
+                        <div class="player-year">${player.draft_year}</div>
+                        <div class="stars">${starString(stars)}</div>
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -582,135 +653,125 @@
         currentPool.forEach((player, index) => {
             const card = document.createElement('div');
             card.className = 'pool-card tier-' + getTier(player.rating);
-            card.draggable = true;
             card.dataset.index = index;
             card.innerHTML = buildCardHTML(player, false);
 
-            card.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', JSON.stringify(player));
-                card.classList.add('dragging');
-            });
-
-            card.addEventListener('dragend', () => {
-                card.classList.remove('dragging');
-            });
-
-            // Touch support
-            card.addEventListener('touchstart', handleTouchStart, { passive: false });
-            card.addEventListener('touchmove', handleTouchMove, { passive: false });
-            card.addEventListener('touchend', handleTouchEnd, { passive: false });
+            // Mouse drag
+            card.addEventListener('mousedown', (e) => handleDragStart(e, card, index));
+            // Touch drag
+            card.addEventListener('touchstart', (e) => handleDragStart(e, card, index), { passive: false });
 
             pool.appendChild(card);
         });
     }
 
-    // ── Touch drag support ──
-    let touchDragData = null;
-    let touchDragEl = null;
-    let touchClone = null;
+    // ── Unified drag support (mouse + touch) ──
+    let dragData = null;
+    let dragEl = null;
+    let dragClone = null;
 
-    function handleTouchStart(e) {
-        if (pickedThisRound) return;
-        const card = e.currentTarget;
-        const index = parseInt(card.dataset.index);
-        touchDragData = currentPool[index];
-        touchDragEl = card;
-
-        // Create a visual clone that follows the finger
-        touchClone = card.cloneNode(true);
-        touchClone.style.position = 'fixed';
-        touchClone.style.zIndex = '999';
-        touchClone.style.pointerEvents = 'none';
-        touchClone.style.opacity = '0.8';
-        touchClone.style.width = card.offsetWidth + 'px';
-        touchClone.style.height = card.offsetHeight + 'px';
-        const touch = e.touches[0];
-        touchClone.style.left = (touch.clientX - card.offsetWidth / 2) + 'px';
-        touchClone.style.top = (touch.clientY - card.offsetHeight / 2) + 'px';
-        document.body.appendChild(touchClone);
-
-        card.classList.add('dragging');
-        e.preventDefault();
+    function getPointer(e) {
+        if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        return { x: e.clientX, y: e.clientY };
     }
 
-    function handleTouchMove(e) {
-        if (!touchClone) return;
-        const touch = e.touches[0];
-        touchClone.style.left = (touch.clientX - touchClone.offsetWidth / 2) + 'px';
-        touchClone.style.top = (touch.clientY - touchClone.offsetHeight / 2) + 'px';
+    function getEndPointer(e) {
+        if (e.changedTouches) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+        return { x: e.clientX, y: e.clientY };
+    }
 
-        // Highlight slot under finger
+    function handleDragStart(e, card, index) {
+        if (pickedThisRound) return;
+        e.preventDefault();
+
+        dragData = currentPool[index];
+        dragEl = card;
+
+        const pos = getPointer(e);
+
+        // Clone the card to follow cursor/finger
+        dragClone = card.cloneNode(true);
+        dragClone.style.position = 'fixed';
+        dragClone.style.zIndex = '999';
+        dragClone.style.pointerEvents = 'none';
+        dragClone.style.opacity = '0.85';
+        dragClone.style.width = card.offsetWidth + 'px';
+        dragClone.style.height = card.offsetHeight + 'px';
+        dragClone.style.left = (pos.x - card.offsetWidth / 2) + 'px';
+        dragClone.style.top = (pos.y - card.offsetHeight / 2) + 'px';
+        dragClone.style.transition = 'none';
+        document.body.appendChild(dragClone);
+
+        card.classList.add('dragging');
+
+        // Bind move/end to document
+        document.addEventListener('mousemove', handleDragMove);
+        document.addEventListener('mouseup', handleDragEnd);
+        document.addEventListener('touchmove', handleDragMove, { passive: false });
+        document.addEventListener('touchend', handleDragEnd, { passive: false });
+    }
+
+    function handleDragMove(e) {
+        if (!dragClone) return;
+        e.preventDefault();
+        const pos = getPointer(e);
+        dragClone.style.left = (pos.x - dragClone.offsetWidth / 2) + 'px';
+        dragClone.style.top = (pos.y - dragClone.offsetHeight / 2) + 'px';
+
+        // Highlight slot under pointer
         document.querySelectorAll('.hex-slot').forEach(s => s.classList.remove('dragover'));
-        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        dragClone.style.display = 'none';
+        const el = document.elementFromPoint(pos.x, pos.y);
+        dragClone.style.display = '';
         if (el) {
             const slot = el.closest('.hex-slot');
             if (slot && !slot.classList.contains('filled')) {
                 slot.classList.add('dragover');
             }
         }
-        e.preventDefault();
     }
 
-    function handleTouchEnd(e) {
-        if (!touchClone || !touchDragData) {
-            cleanupTouch();
+    function handleDragEnd(e) {
+        if (!dragClone || !dragData) {
+            cleanupDrag();
             return;
         }
 
-        const touch = e.changedTouches[0];
-        if (touchClone) touchClone.style.display = 'none';
-        const el = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (touchClone) touchClone.style.display = '';
+        const pos = getEndPointer(e);
+        dragClone.style.display = 'none';
+        const el = document.elementFromPoint(pos.x, pos.y);
+        dragClone.style.display = '';
 
         if (el) {
             const slot = el.closest('.hex-slot');
             if (slot && !slot.classList.contains('filled')) {
-                placeCard(slot, touchDragData);
+                placeCard(slot, dragData);
             }
         }
 
         document.querySelectorAll('.hex-slot').forEach(s => s.classList.remove('dragover'));
-        cleanupTouch();
+        cleanupDrag();
     }
 
-    function cleanupTouch() {
-        if (touchClone && touchClone.parentNode) {
-            touchClone.parentNode.removeChild(touchClone);
-        }
-        if (touchDragEl) touchDragEl.classList.remove('dragging');
-        touchDragData = null;
-        touchDragEl = null;
-        touchClone = null;
+    function cleanupDrag() {
+        if (dragClone && dragClone.parentNode) dragClone.parentNode.removeChild(dragClone);
+        if (dragEl) dragEl.classList.remove('dragging');
+        dragData = null;
+        dragEl = null;
+        dragClone = null;
+        document.removeEventListener('mousemove', handleDragMove);
+        document.removeEventListener('mouseup', handleDragEnd);
+        document.removeEventListener('touchmove', handleDragMove);
+        document.removeEventListener('touchend', handleDragEnd);
     }
 
     // ── Drop zones ──
     function setupDropZones() {
         document.querySelectorAll('.hex-slot').forEach(slot => {
-            // Show empty label
             const label = document.createElement('span');
             label.className = 'empty-label';
             label.textContent = 'G';
             slot.appendChild(label);
-
-            slot.addEventListener('dragover', (e) => {
-                if (slot.classList.contains('filled')) return;
-                e.preventDefault();
-                slot.classList.add('dragover');
-            });
-
-            slot.addEventListener('dragleave', () => {
-                slot.classList.remove('dragover');
-            });
-
-            slot.addEventListener('drop', (e) => {
-                e.preventDefault();
-                slot.classList.remove('dragover');
-                if (slot.classList.contains('filled')) return;
-                if (pickedThisRound) return;
-
-                const player = JSON.parse(e.dataTransfer.getData('text/plain'));
-                placeCard(slot, player);
-            });
         });
     }
 
@@ -722,14 +783,11 @@
         draftedPlayerIds.push(player.id);
         pickedThisRound = true;
 
-        // Render card in slot
         slot.innerHTML = buildCardHTML(player, true);
         slot.classList.add('filled');
 
-        // Disable remaining pool cards
         document.querySelectorAll('.pool-card').forEach(card => {
             card.classList.add('disabled');
-            card.draggable = false;
         });
 
         updateScore();
@@ -748,7 +806,6 @@
         if (!pickedThisRound) return;
 
         if (currentRound >= totalRounds) {
-            // Draft complete
             const overlay = document.getElementById('draft-complete');
             const talent = document.getElementById('talent-score').textContent;
             document.getElementById('final-score').textContent = 'Total Talent: ' + talent;
