@@ -191,6 +191,20 @@
 				background: #fff;
 				border-radius: 50%;
 				z-index: -1;
+				transition: background 0.3s;
+			}
+
+			.hex-slot-wrapper.dot-red::after {
+				background: #ef4444;
+			}
+			.hex-slot-wrapper.dot-yellow::after {
+				background: #f59e0b;
+			}
+			.hex-slot-wrapper.dot-green::after {
+				background: #4ade80;
+			}
+			.hex-slot-wrapper.dot-blue::after {
+				background: #3b82f6;
 			}
 
 			.slot-position-label {
@@ -944,6 +958,7 @@
 									dragSourceSlot.appendChild(label);
 									dragSourceSlot.classList.remove('filled');
 								}
+								updateScore();
 							}
 						} else if (!targetSlot.classList.contains('filled')) {
 							// Dragging from pool to empty slot
@@ -1012,13 +1027,122 @@
 				updateScore();
 			}
 
+			function calculateChemistry() {
+				const lineChems = [];
+
+				// Calculate chem for each connection
+				gridConnections.forEach(([a, b]) => {
+					const playerA = draftedSlots[a];
+					const playerB = draftedSlots[b];
+
+					if (!playerA || !playerB) {
+						lineChems.push({ a, b, chem: null });
+						return;
+					}
+
+					let chem = 0;
+					if (playerA.draft_year === playerB.draft_year) chem += 1;
+					if (playerA.team_division && playerB.team_division && playerA.team_division === playerB.team_division) chem += 1;
+					if (playerA.team_name === playerB.team_name) chem += 1;
+					if (playerA.college && playerB.college && playerA.college.trim() !== '' && playerB.college.trim() !== '' && playerA.college === playerB.college) chem += 2;
+
+					lineChems.push({ a, b, chem });
+				});
+
+				// Calculate dot bonuses for each occupied slot
+				const dotBonuses = {};
+				for (const slotIndex in draftedSlots) {
+					const idx = parseInt(slotIndex);
+					let adjacentCount = 0;
+					let chemSum = 0;
+
+					lineChems.forEach(lc => {
+						if (lc.a !== idx && lc.b !== idx) return;
+						if (lc.chem === null) return; // other slot empty
+						adjacentCount++;
+						chemSum += lc.chem;
+					});
+
+					if (adjacentCount === 0) {
+						dotBonuses[idx] = { color: 'white', bonus: 0 };
+					} else if (chemSum < 2) {
+						dotBonuses[idx] = { color: 'red', bonus: 0 };
+					} else if (chemSum < 4) {
+						dotBonuses[idx] = { color: 'yellow', bonus: 6 };
+					} else if (chemSum < 6) {
+						dotBonuses[idx] = { color: 'green', bonus: 11 };
+					} else {
+						dotBonuses[idx] = { color: 'blue', bonus: 15 };
+					}
+				}
+
+				// Sum it all up
+				let totalChem = 0;
+				lineChems.forEach(lc => {
+					if (lc.chem !== null) totalChem += lc.chem;
+				});
+				for (const idx in dotBonuses) {
+					totalChem += dotBonuses[idx].bonus;
+				}
+
+				return { totalChem, lineChems, dotBonuses };
+			}
+
+			function updateLineColors(lineChems) {
+				lineChems.forEach(({ a, b, chem }) => {
+					const line = document.querySelector(`line[data-connection="${a}-${b}"]`);
+					if (!line) return;
+
+					if (chem === null) {
+						line.setAttribute('stroke', 'rgba(255, 255, 255, 0.25)');
+						line.setAttribute('stroke-width', '2.5');
+					} else if (chem === 0) {
+						line.setAttribute('stroke', '#ef4444');
+						line.setAttribute('stroke-width', '3.5');
+					} else if (chem === 1) {
+						line.setAttribute('stroke', '#f59e0b');
+						line.setAttribute('stroke-width', '3.5');
+					} else if (chem === 2) {
+						line.setAttribute('stroke', '#4ade80');
+						line.setAttribute('stroke-width', '3.5');
+					} else {
+						line.setAttribute('stroke', '#3b82f6');
+						line.setAttribute('stroke-width', '3.5');
+					}
+				});
+			}
+
+			function updateDotColors(dotBonuses) {
+				document.querySelectorAll('.hex-slot-wrapper').forEach(wrapper => {
+					wrapper.classList.remove('dot-red', 'dot-yellow', 'dot-green', 'dot-blue');
+				});
+
+				for (const idx in dotBonuses) {
+					const slot = document.querySelector(`.hex-slot[data-slot="${idx}"]`);
+					if (!slot) continue;
+					const wrapper = slot.closest('.hex-slot-wrapper');
+					if (!wrapper) continue;
+					const color = dotBonuses[idx].color;
+					if (color !== 'white') {
+						wrapper.classList.add('dot-' + color);
+					}
+				}
+			}
+
 			function updateScore() {
 				let talent = 0;
 				for (const key in draftedSlots) {
 					talent += getTalentBonus(draftedSlots[key].rating);
 				}
+
+				const { totalChem, lineChems, dotBonuses } = calculateChemistry();
+
 				document.getElementById('talent-score').textContent = talent;
-				document.getElementById('total-score').textContent = talent;
+				document.getElementById('chem-score').textContent = totalChem;
+				document.getElementById('total-score').textContent = talent + totalChem;
+
+				updateLineColors(lineChems);
+				updateDotColors(dotBonuses);
 			}
 
 			function nextRound() {
@@ -1027,7 +1151,9 @@
 				if (currentRound >= totalRounds) {
 					const overlay = document.getElementById('draft-complete');
 					const talent = document.getElementById('talent-score').textContent;
-					document.getElementById('final-score').textContent = 'Total Talent: ' + talent;
+					const chem = document.getElementById('chem-score').textContent;
+					const total = document.getElementById('total-score').textContent;
+					document.getElementById('final-score').textContent = `Talent: ${talent} | Chem: ${chem} | Total: ${total}`;
 					overlay.classList.add('show');
 					return;
 				}
@@ -1084,8 +1210,13 @@
 					line.setAttribute('y2', centers[b].y);
 					line.setAttribute('stroke', 'rgba(255, 255, 255, 0.25)');
 					line.setAttribute('stroke-width', '2.5');
+					line.setAttribute('data-connection', `${a}-${b}`);
 					svg.appendChild(line);
 				});
+
+				// Re-apply colors after redraw (e.g. on resize)
+				const { lineChems } = calculateChemistry();
+				updateLineColors(lineChems);
 			}
 
 			// ── Init ──

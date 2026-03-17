@@ -40,6 +40,7 @@ def api_random_players(request):
                 "team_logo": p.team.logo_image,
                 "team_division": p.team.division,
                 "draft_year": p.draft_year,
+                "college": p.college,
             }
         )
     return JsonResponse(data, safe=False)
