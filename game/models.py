@@ -15,6 +15,7 @@ class Player(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     image = models.URLField()
+    position = models.CharField(max_length=10, default="")
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="players")
     draft_year = models.PositiveIntegerField()
     rating = models.PositiveIntegerField()
