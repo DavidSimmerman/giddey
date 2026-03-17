@@ -2,7 +2,6 @@ import re
 import time
 
 import cloudscraper
-import requests
 from bs4 import BeautifulSoup
 from django.core.management.base import BaseCommand
 
@@ -10,22 +9,41 @@ from game.models import Player, Team
 
 CURRENT_SEASON_YEAR = 2026
 
-NBA_API_URL = (
-    "https://stats.nba.com/stats/leaguestandingsv3"
-    "?GroupBy=div&LeagueID=00&Season=2025-26"
-    "&SeasonType=Regular%20Season&Section=overall"
-)
-NBA_API_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
-    ),
-    "Accept": "application/json",
-    "Referer": "https://www.nba.com/",
-}
-
 BASE_URL = "https://www.2kratings.com"
+
+NBA_TEAMS = {
+    "hawks": {"city": "Atlanta", "name": "Hawks", "division": "Southeast"},
+    "celtics": {"city": "Boston", "name": "Celtics", "division": "Atlantic"},
+    "nets": {"city": "Brooklyn", "name": "Nets", "division": "Atlantic"},
+    "hornets": {"city": "Charlotte", "name": "Hornets", "division": "Southeast"},
+    "bulls": {"city": "Chicago", "name": "Bulls", "division": "Central"},
+    "cavaliers": {"city": "Cleveland", "name": "Cavaliers", "division": "Central"},
+    "mavericks": {"city": "Dallas", "name": "Mavericks", "division": "Southwest"},
+    "nuggets": {"city": "Denver", "name": "Nuggets", "division": "Northwest"},
+    "pistons": {"city": "Detroit", "name": "Pistons", "division": "Central"},
+    "warriors": {"city": "Golden State", "name": "Warriors", "division": "Pacific"},
+    "rockets": {"city": "Houston", "name": "Rockets", "division": "Southwest"},
+    "pacers": {"city": "Indiana", "name": "Pacers", "division": "Central"},
+    "clippers": {"city": "Los Angeles", "name": "Clippers", "division": "Pacific"},
+    "lakers": {"city": "Los Angeles", "name": "Lakers", "division": "Pacific"},
+    "grizzlies": {"city": "Memphis", "name": "Grizzlies", "division": "Southwest"},
+    "heat": {"city": "Miami", "name": "Heat", "division": "Southeast"},
+    "bucks": {"city": "Milwaukee", "name": "Bucks", "division": "Central"},
+    "timberwolves": {"city": "Minnesota", "name": "Timberwolves", "division": "Northwest"},
+    "pelicans": {"city": "New Orleans", "name": "Pelicans", "division": "Southwest"},
+    "knicks": {"city": "New York", "name": "Knicks", "division": "Atlantic"},
+    "thunder": {"city": "Oklahoma City", "name": "Thunder", "division": "Northwest"},
+    "magic": {"city": "Orlando", "name": "Magic", "division": "Southeast"},
+    "sixers": {"city": "Philadelphia", "name": "76ers", "division": "Atlantic"},
+    "76ers": {"city": "Philadelphia", "name": "76ers", "division": "Atlantic"},
+    "suns": {"city": "Phoenix", "name": "Suns", "division": "Pacific"},
+    "blazers": {"city": "Portland", "name": "Trail Blazers", "division": "Northwest"},
+    "kings": {"city": "Sacramento", "name": "Kings", "division": "Pacific"},
+    "spurs": {"city": "San Antonio", "name": "Spurs", "division": "Southwest"},
+    "raptors": {"city": "Toronto", "name": "Raptors", "division": "Atlantic"},
+    "jazz": {"city": "Utah", "name": "Jazz", "division": "Northwest"},
+    "wizards": {"city": "Washington", "name": "Wizards", "division": "Southeast"},
+}
 
 
 class Command(BaseCommand):
@@ -34,12 +52,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.scraper = cloudscraper.create_scraper()
 
-        # Step 1: NBA API for city/division data
-        self.stdout.write("Fetching NBA API for team metadata...")
-        nba_teams = self.fetch_nba_api()
-        self.stdout.write(f"  Got {len(nba_teams)} teams from NBA API")
-
-        # Step 2: Scrape the current-teams page table for the 30 team links
+        # Step 1: Scrape the current-teams page table for the 30 team links
         self.stdout.write("Fetching current team links...")
         team_links = self.get_team_links()
         self.stdout.write(f"  Found {len(team_links)} teams")
@@ -52,7 +65,7 @@ class Command(BaseCommand):
         for i, team_url in enumerate(team_links, 1):
             self.stdout.write(f"\n[{i}/{len(team_links)}] Scraping {team_url}")
             try:
-                self.scrape_team(team_url, nba_teams)
+                self.scrape_team(team_url, NBA_TEAMS)
             except Exception as e:
                 self.stderr.write(f"  ERROR scraping team: {e}")
             time.sleep(1)
@@ -63,63 +76,6 @@ class Command(BaseCommand):
                 f"Players: {Player.objects.count()}"
             )
         )
-
-    def fetch_nba_api(self):
-        """Fetch team city and division from NBA stats API."""
-        for attempt in range(3):
-            try:
-                r = requests.get(
-                    NBA_API_URL, headers=NBA_API_HEADERS, timeout=30
-                )
-                r.raise_for_status()
-                data = r.json()
-                result = {}
-                for row in data["resultSets"][0]["rowSet"]:
-                    slug = row[5]  # TeamSlug
-                    result[slug] = {
-                        "city": row[3],  # TeamCity
-                        "name": row[4],  # TeamName
-                        "division": row[10],  # Division
-                    }
-                return result
-            except Exception as e:
-                self.stderr.write(f"  NBA API attempt {attempt + 1} failed: {e}")
-                if attempt < 2:
-                    time.sleep(5)
-        self.stderr.write("  NBA API failed, using fallback data")
-        return {
-            "hawks": {"city": "Atlanta", "name": "Hawks", "division": "Southeast"},
-            "celtics": {"city": "Boston", "name": "Celtics", "division": "Atlantic"},
-            "nets": {"city": "Brooklyn", "name": "Nets", "division": "Atlantic"},
-            "hornets": {"city": "Charlotte", "name": "Hornets", "division": "Southeast"},
-            "bulls": {"city": "Chicago", "name": "Bulls", "division": "Central"},
-            "cavaliers": {"city": "Cleveland", "name": "Cavaliers", "division": "Central"},
-            "mavericks": {"city": "Dallas", "name": "Mavericks", "division": "Southwest"},
-            "nuggets": {"city": "Denver", "name": "Nuggets", "division": "Northwest"},
-            "pistons": {"city": "Detroit", "name": "Pistons", "division": "Central"},
-            "warriors": {"city": "Golden State", "name": "Warriors", "division": "Pacific"},
-            "rockets": {"city": "Houston", "name": "Rockets", "division": "Southwest"},
-            "pacers": {"city": "Indiana", "name": "Pacers", "division": "Central"},
-            "clippers": {"city": "Los Angeles", "name": "Clippers", "division": "Pacific"},
-            "lakers": {"city": "Los Angeles", "name": "Lakers", "division": "Pacific"},
-            "grizzlies": {"city": "Memphis", "name": "Grizzlies", "division": "Southwest"},
-            "heat": {"city": "Miami", "name": "Heat", "division": "Southeast"},
-            "bucks": {"city": "Milwaukee", "name": "Bucks", "division": "Central"},
-            "timberwolves": {"city": "Minnesota", "name": "Timberwolves", "division": "Northwest"},
-            "pelicans": {"city": "New Orleans", "name": "Pelicans", "division": "Southwest"},
-            "knicks": {"city": "New York", "name": "Knicks", "division": "Atlantic"},
-            "thunder": {"city": "Oklahoma City", "name": "Thunder", "division": "Northwest"},
-            "magic": {"city": "Orlando", "name": "Magic", "division": "Southeast"},
-            "sixers": {"city": "Philadelphia", "name": "76ers", "division": "Atlantic"},
-            "76ers": {"city": "Philadelphia", "name": "76ers", "division": "Atlantic"},
-            "suns": {"city": "Phoenix", "name": "Suns", "division": "Pacific"},
-            "blazers": {"city": "Portland", "name": "Trail Blazers", "division": "Northwest"},
-            "kings": {"city": "Sacramento", "name": "Kings", "division": "Pacific"},
-            "spurs": {"city": "San Antonio", "name": "Spurs", "division": "Southwest"},
-            "raptors": {"city": "Toronto", "name": "Raptors", "division": "Atlantic"},
-            "jazz": {"city": "Utah", "name": "Jazz", "division": "Northwest"},
-            "wizards": {"city": "Washington", "name": "Wizards", "division": "Southeast"},
-        }
 
     def get_team_links(self):
         """Get the 30 current team links from the table on the current-teams page."""
