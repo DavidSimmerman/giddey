@@ -200,6 +200,7 @@
             object-fit: contain;
             opacity: 1;
             pointer-events: none;
+            -webkit-user-drag: none;
         }
 
         .card-upper .player-photo {
@@ -212,6 +213,8 @@
             object-position: top center;
             z-index: 1;
             filter: drop-shadow(-3px 2px 6px rgba(0,0,0,0.6));
+            pointer-events: none;
+            -webkit-user-drag: none;
         }
 
         .card-badge-row {
@@ -304,6 +307,8 @@
             height: 100%;
             position: relative;
             background: linear-gradient(135deg, var(--border-light) 0%, var(--border-dark) 50%, var(--border-light) 100%);
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .card-in-slot .card-inner {
@@ -381,6 +386,7 @@
             cursor: grab;
             transition: transform 0.15s, opacity 0.3s;
             user-select: none;
+            -webkit-user-select: none;
         }
 
         .pool-card:hover {
@@ -669,6 +675,7 @@
     let dragData = null;
     let dragEl = null;
     let dragClone = null;
+    let dragSourceSlot = null; // track if dragging from a grid slot
 
     function getPointer(e) {
         if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -686,25 +693,41 @@
 
         dragData = currentPool[index];
         dragEl = card;
+        dragSourceSlot = null;
 
+        startDragVisual(e, card);
+    }
+
+    function handleSlotDragStart(e, slot) {
+        e.preventDefault();
+        const slotIndex = slot.dataset.slot;
+        if (!draftedSlots[slotIndex]) return;
+
+        dragData = draftedSlots[slotIndex];
+        dragEl = slot;
+        dragSourceSlot = slot;
+
+        startDragVisual(e, slot);
+    }
+
+    function startDragVisual(e, el) {
         const pos = getPointer(e);
 
-        // Clone the card to follow cursor/finger
-        dragClone = card.cloneNode(true);
+        dragClone = el.cloneNode(true);
         dragClone.style.position = 'fixed';
         dragClone.style.zIndex = '999';
         dragClone.style.pointerEvents = 'none';
         dragClone.style.opacity = '0.85';
-        dragClone.style.width = card.offsetWidth + 'px';
-        dragClone.style.height = card.offsetHeight + 'px';
-        dragClone.style.left = (pos.x - card.offsetWidth / 2) + 'px';
-        dragClone.style.top = (pos.y - card.offsetHeight / 2) + 'px';
+        dragClone.style.width = el.offsetWidth + 'px';
+        dragClone.style.height = el.offsetHeight + 'px';
+        dragClone.style.left = (pos.x - el.offsetWidth / 2) + 'px';
+        dragClone.style.top = (pos.y - el.offsetHeight / 2) + 'px';
         dragClone.style.transition = 'none';
         document.body.appendChild(dragClone);
 
-        card.classList.add('dragging');
+        el.classList.add('dragging');
+        document.body.style.cursor = 'grabbing';
 
-        // Bind move/end to document
         document.addEventListener('mousemove', handleDragMove);
         document.addEventListener('mouseup', handleDragEnd);
         document.addEventListener('touchmove', handleDragMove, { passive: false });
@@ -718,14 +741,13 @@
         dragClone.style.left = (pos.x - dragClone.offsetWidth / 2) + 'px';
         dragClone.style.top = (pos.y - dragClone.offsetHeight / 2) + 'px';
 
-        // Highlight slot under pointer
         document.querySelectorAll('.hex-slot').forEach(s => s.classList.remove('dragover'));
         dragClone.style.display = 'none';
         const el = document.elementFromPoint(pos.x, pos.y);
         dragClone.style.display = '';
         if (el) {
             const slot = el.closest('.hex-slot');
-            if (slot && !slot.classList.contains('filled')) {
+            if (slot && slot !== dragSourceSlot) {
                 slot.classList.add('dragover');
             }
         }
@@ -743,9 +765,39 @@
         dragClone.style.display = '';
 
         if (el) {
-            const slot = el.closest('.hex-slot');
-            if (slot && !slot.classList.contains('filled')) {
-                placeCard(slot, dragData);
+            const targetSlot = el.closest('.hex-slot');
+            if (targetSlot && targetSlot !== dragSourceSlot) {
+                if (dragSourceSlot) {
+                    // Moving from one slot to another — swap
+                    const sourceIndex = dragSourceSlot.dataset.slot;
+                    const targetIndex = targetSlot.dataset.slot;
+                    const targetPlayer = draftedSlots[targetIndex] || null;
+
+                    // Place dragged player in target
+                    draftedSlots[targetIndex] = dragData;
+                    targetSlot.innerHTML = buildCardHTML(dragData, true);
+                    targetSlot.classList.add('filled');
+                    makeSlotDraggable(targetSlot);
+
+                    // Place target player in source (or clear it)
+                    if (targetPlayer) {
+                        draftedSlots[sourceIndex] = targetPlayer;
+                        dragSourceSlot.innerHTML = buildCardHTML(targetPlayer, true);
+                        dragSourceSlot.classList.add('filled');
+                        makeSlotDraggable(dragSourceSlot);
+                    } else {
+                        delete draftedSlots[sourceIndex];
+                        const label = document.createElement('span');
+                        label.className = 'empty-label';
+                        label.textContent = 'G';
+                        dragSourceSlot.innerHTML = '';
+                        dragSourceSlot.appendChild(label);
+                        dragSourceSlot.classList.remove('filled');
+                    }
+                } else if (!targetSlot.classList.contains('filled')) {
+                    // Dragging from pool to empty slot
+                    placeCard(targetSlot, dragData);
+                }
             }
         }
 
@@ -756,13 +808,24 @@
     function cleanupDrag() {
         if (dragClone && dragClone.parentNode) dragClone.parentNode.removeChild(dragClone);
         if (dragEl) dragEl.classList.remove('dragging');
+        document.body.style.cursor = '';
         dragData = null;
         dragEl = null;
         dragClone = null;
+        dragSourceSlot = null;
         document.removeEventListener('mousemove', handleDragMove);
         document.removeEventListener('mouseup', handleDragEnd);
         document.removeEventListener('touchmove', handleDragMove);
         document.removeEventListener('touchend', handleDragEnd);
+    }
+
+    // ── Make a filled slot draggable ──
+    function makeSlotDraggable(slot) {
+        slot.style.cursor = 'grab';
+        // Remove old listeners by replacing the node (clean way)
+        const handler = (e) => handleSlotDragStart(e, slot);
+        slot.onmousedown = handler;
+        slot.ontouchstart = handler;
     }
 
     // ── Drop zones ──
@@ -785,6 +848,7 @@
 
         slot.innerHTML = buildCardHTML(player, true);
         slot.classList.add('filled');
+        makeSlotDraggable(slot);
 
         document.querySelectorAll('.pool-card').forEach(card => {
             card.classList.add('disabled');
