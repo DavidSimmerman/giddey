@@ -1,10 +1,14 @@
+import json
 import random
-from collections import defaultdict
 
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
-from .models import Player, Team
+from .models import Draft, DraftPick, Player
 
 # Tier odds per round: (platinum, gold, silver, bronze)
 # Hero % is merged into platinum since we don't have hero tier yet.
@@ -44,11 +48,9 @@ TIER_FILTERS = {
 
 
 def home(request):
-    teams = Team.objects.prefetch_related("players").order_by("division", "city")
-    divisions = defaultdict(list)
-    for team in teams:
-        divisions[team.division].append(team)
-    return render(request, "game/home.html", {"divisions": dict(divisions)})
+    if not request.user.is_authenticated and not request.session.get("guest"):
+        return redirect("login")
+    return render(request, "game/home.html")
 
 
 def draft(request):
@@ -120,3 +122,91 @@ def api_random_players(request):
             picked_ids.add(player.id)
 
     return JsonResponse(data, safe=False)
+
+
+def login_view(request):
+    if request.method == "POST":
+        action = request.POST.get("action")
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
+
+        if action == "register":
+            password2 = request.POST.get("password2", "")
+            if not username or not password:
+                return render(request, "game/login.html", {"error": "All fields are required.", "tab": "register"})
+            if password != password2:
+                return render(request, "game/login.html", {"error": "Passwords do not match.", "tab": "register"})
+            if User.objects.filter(username=username).exists():
+                return render(request, "game/login.html", {"error": "Username already taken.", "tab": "register"})
+            user = User.objects.create_user(username=username, password=password)
+            login(request, user)
+            return redirect("home")
+
+        else:
+            user = authenticate(request, username=username, password=password)
+            if user is None:
+                return render(request, "game/login.html", {"error": "Invalid username or password.", "tab": "login"})
+            login(request, user)
+            return redirect("home")
+
+    return render(request, "game/login.html", {"tab": "login"})
+
+
+def guest_view(request):
+    request.session["guest"] = True
+    return redirect("home")
+
+
+def logout_view(request):
+    logout(request)
+    request.session.flush()
+    return redirect("login")
+
+
+@require_POST
+def api_save_draft(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    try:
+        body = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    draft = Draft.objects.create(
+        user=request.user,
+        talent_score=body["talent_score"],
+        chemistry_score=body["chemistry_score"],
+        total_score=body["total_score"],
+        optimal_score=body["optimal_score"],
+    )
+    for pick in body["picks"]:
+        DraftPick.objects.create(
+            draft=draft,
+            player_id=pick["player_id"],
+            round_number=pick["round_number"],
+            slot_index=pick["slot_index"],
+        )
+
+    return JsonResponse({"id": draft.id})
+
+
+@login_required(login_url="login")
+def history_view(request):
+    drafts = request.user.drafts.all()
+    return render(request, "game/history.html", {"drafts": drafts})
+
+
+@login_required(login_url="login")
+def draft_detail_view(request, draft_id):
+    draft = get_object_or_404(Draft, id=draft_id, user=request.user)
+    picks = draft.picks.select_related("player", "player__team").all()
+    slot_positions = ["SG", "PF", "SF", "PG", "PG", "SF", "PF", "SG", "C"]
+    for pick in picks:
+        pick.slot_position = slot_positions[pick.slot_index]
+    accuracy = round((draft.total_score / draft.optimal_score) * 100) if draft.optimal_score > 0 else 100
+    return render(request, "game/draft_detail.html", {
+        "draft": draft,
+        "picks": picks,
+        "accuracy": accuracy,
+    })

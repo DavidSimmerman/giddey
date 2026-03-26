@@ -915,7 +915,7 @@
 	<body>
 		<!-- Header -->
 		<div class="header">
-			<div class="header-title">Giddey</div>
+			<a href="{% url 'home' %}" class="header-title" style="text-decoration:none">Giddey</a>
 			<div class="header-right">
 				<div class="score-box">
 					<div class="value" id="talent-score">0</div>
@@ -1052,6 +1052,9 @@
 					</div>
 				</div>
 				<button class="next-draft-btn" onclick="window.location.reload()">Next Draft</button>
+				{% if user.is_authenticated %}
+				<a href="{% url 'history' %}" class="next-draft-btn" style="text-decoration:none;text-align:center;background:#333;">My Drafts</a>
+				{% endif %}
 			</div>
 		</div>
 
@@ -1359,6 +1362,7 @@
 				if (pickedThisRound || slot.classList.contains('filled')) return;
 
 				const slotIndex = slot.dataset.slot;
+				player.pick_round = currentRound;
 				draftedSlots[slotIndex] = player;
 				draftedPlayerIds.push(player.id);
 				pickedThisRound = true;
@@ -1544,6 +1548,33 @@
 					drawResultsLines('myteam', draftedSlots);
 					drawResultsLines('solution', solutionSlots);
 				});
+
+				// Save draft for authenticated users
+				{% if user.is_authenticated %}
+				const picks = [];
+				for (const slotIndex in draftedSlots) {
+					const p = draftedSlots[slotIndex];
+					picks.push({
+						player_id: p.id,
+						round_number: p.pick_round,
+						slot_index: parseInt(slotIndex),
+					});
+				}
+				fetch('{% url "api_save_draft" %}', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRFToken': '{{ csrf_token }}',
+					},
+					body: JSON.stringify({
+						talent_score: userTalent,
+						chemistry_score: userChemResult.totalChem,
+						total_score: userTotal,
+						optimal_score: solTotal,
+						picks: picks,
+					}),
+				});
+				{% endif %}
 			}
 
 			function calcTalent(slots) {

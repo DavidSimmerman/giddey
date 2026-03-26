@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giddey – My Drafts</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #c45e20;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: #1a1a1a;
+        }
+
+        .header a {
+            color: #aaa;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+        }
+
+        .header a:hover { color: #e8883a; }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #e8883a;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+
+        .content {
+            max-width: 600px;
+            width: 100%;
+            margin: 1.5rem auto;
+            padding: 0 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .empty {
+            color: #1a1a1a;
+            font-size: 1rem;
+        }
+
+        .draft-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.2s;
+        }
+
+        .draft-card:hover {
+            background: #2a2a2a;
+        }
+
+        .draft-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .draft-date {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .draft-score {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .draft-right {
+            text-align: right;
+        }
+
+        .draft-accuracy {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e8883a;
+        }
+
+        .draft-optimal {
+            font-size: 0.75rem;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'home' %}">&larr; Home</a>
+        <a href="{% url 'home' %}" class="header-title">Giddey</a>
+        <a href="{% url 'logout' %}">Log Out</a>
+    </div>
+
+    <div class="content">
+        <h2>My Drafts</h2>
+
+        {% if drafts %}
+            {% for d in drafts %}
+            <a class="draft-card" href="{% url 'draft_detail' d.id %}">
+                <div class="draft-info">
+                    <span class="draft-date">{{ d.completed_at|date:"M j, Y – g:i A" }}</span>
+                    <span class="draft-score">{{ d.total_score }} pts</span>
+                </div>
+                <div class="draft-right">
+                    <div class="draft-accuracy">
+                        {% widthratio d.total_score d.optimal_score 100 %}%
+                    </div>
+                    <div class="draft-optimal">of {{ d.optimal_score }} max</div>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <p class="empty">No drafts yet. Go play one!</p>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -9,214 +9,121 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #1a1a2e;
+            background: #c45e20;
             color: #e0e0e0;
-            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 2rem;
-            font-size: 2rem;
-            color: #fff;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 4rem;
-            color: #888;
-            font-size: 1.2rem;
-        }
-
-        /* Division accordion */
-        .division {
-            margin-bottom: 1rem;
-            border-radius: 8px;
-            overflow: hidden;
-            background: #16213e;
-        }
-
-        .division-header {
-            width: 100%;
-            padding: 1rem 1.5rem;
-            background: #0f3460;
-            color: #fff;
-            border: none;
-            font-size: 1.2rem;
-            font-weight: 600;
-            cursor: pointer;
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: background 0.2s;
+            padding: 1rem 1.5rem;
+            background: #1a1a1a;
         }
 
-        .division-header:hover { background: #1a4a7a; }
-
-        .division-header::after {
-            content: "\25B6";
-            font-size: 0.8rem;
-            transition: transform 0.3s;
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #e8883a;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            text-decoration: none;
         }
 
-        .division.open .division-header::after {
-            transform: rotate(90deg);
-        }
-
-        .division-body {
-            display: none;
-            padding: 1rem;
-        }
-
-        .division.open .division-body { display: block; }
-
-        /* Team accordion (nested) */
-        .team {
-            margin-bottom: 0.75rem;
-            border-radius: 6px;
-            overflow: hidden;
-            background: #1a1a2e;
-        }
-
-        .team-header {
-            width: 100%;
-            padding: 0.75rem 1.25rem;
-            background: #1a1a2e;
-            color: #e0e0e0;
-            border: 1px solid #2a2a4a;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
+        .auth-links {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 1rem;
+            font-size: 0.85rem;
+        }
+
+        .auth-links a {
+            color: #aaa;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .auth-links a:hover {
+            color: #e8883a;
+        }
+
+        .auth-links .username {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1.5rem;
+            gap: 1.5rem;
+        }
+
+        .start-btn {
+            display: inline-block;
+            padding: 0.75rem 3rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            background: #e8883a;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             transition: background 0.2s;
         }
 
-        .team-header:hover { background: #222244; }
-
-        .team-header .arrow {
-            font-size: 0.7rem;
-            transition: transform 0.3s;
+        .start-btn:hover {
+            background: #f09a4a;
         }
 
-        .team.open .team-header .arrow {
-            transform: rotate(90deg);
-        }
-
-        .team-logo {
-            width: 28px;
-            height: 28px;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-
-        .team-body {
-            display: none;
-            padding: 0.75rem 1.25rem;
-        }
-
-        .team.open .team-body { display: block; }
-
-        /* Player table */
-        .players-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .players-table th,
-        .players-table td {
-            padding: 0.5rem 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #2a2a4a;
-        }
-
-        .players-table th {
-            color: #888;
-            font-size: 0.75rem;
+        .secondary-btn {
+            display: inline-block;
+            padding: 0.75rem 3rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            background: #444;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            transition: background 0.2s;
         }
 
-        .players-table tr:last-child td { border-bottom: none; }
-
-        .players-table tr:hover td { background: #222244; }
-
-        .player-img {
-            width: 36px;
-            height: 36px;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        .player-name { font-weight: 500; }
-
-        .no-players {
-            padding: 1rem;
-            color: #666;
-            font-style: italic;
+        .secondary-btn:hover {
+            background: #555;
         }
     </style>
 </head>
 <body>
-    <h1>Giddey</h1>
-
-    {% if not divisions %}
-        <div class="empty-state">No data yet. Add teams and players in the <a href="/admin/" style="color:#4ea8de;">admin panel</a>.</div>
-    {% endif %}
-
-    {% for division_name, teams in divisions.items %}
-    <div class="division">
-        <button class="division-header" onclick="this.parentElement.classList.toggle('open')">
-            {{ division_name }}
-            <span></span>
-        </button>
-        <div class="division-body">
-            {% for team in teams %}
-            <div class="team">
-                <button class="team-header" onclick="this.parentElement.classList.toggle('open')">
-                    <span class="arrow">&#9654;</span>
-                    {% if team.logo_image %}
-                        <img class="team-logo" src="{{ team.logo_image }}" alt="{{ team }}">
-                    {% endif %}
-                    {{ team.city }} {{ team.name }}
-                </button>
-                <div class="team-body">
-                    {% if team.players.all %}
-                    <table class="players-table">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>Name</th>
-                                <th>College</th>
-                                <th>Draft Year</th>
-                                <th>Rating</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for player in team.players.all %}
-                            <tr>
-                                <td>
-                                    {% if player.image %}
-                                        <img class="player-img" src="{{ player.image }}" alt="{{ player }}">
-                                    {% endif %}
-                                </td>
-                                <td class="player-name">{{ player.first_name }} {{ player.last_name }}</td>
-                                <td>{{ player.college }}</td>
-                                <td>{{ player.draft_year }}</td>
-                                <td>{{ player.rating }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                        <div class="no-players">No players on this team.</div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
+    <div class="header">
+        <a href="{% url 'home' %}" class="header-title">Giddey</a>
+        <div class="auth-links">
+            {% if user.is_authenticated %}
+                <span class="username">{{ user.username }}</span>
+                <a href="{% url 'history' %}">My Drafts</a>
+                <a href="{% url 'logout' %}">Log Out</a>
+            {% else %}
+                <a href="{% url 'login' %}">Sign In</a>
+            {% endif %}
         </div>
     </div>
-    {% endfor %}
+    <div class="main">
+        <a href="{% url 'draft' %}" class="start-btn">Start Draft</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'history' %}" class="secondary-btn">My Drafts</a>
+        {% endif %}
+    </div>
 </body>
 </html>

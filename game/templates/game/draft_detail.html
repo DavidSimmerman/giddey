@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giddey – Draft Detail</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #c45e20;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: #1a1a1a;
+        }
+
+        .header a {
+            color: #aaa;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+        }
+
+        .header a:hover { color: #e8883a; }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #e8883a;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+
+        .content {
+            max-width: 600px;
+            width: 100%;
+            margin: 1.5rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .date {
+            color: #1a1a1a;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .scores {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .score-box {
+            flex: 1;
+            min-width: 60px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 0.6rem 0.5rem;
+            text-align: center;
+        }
+
+        .score-box .value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .score-box .label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            color: #999;
+            letter-spacing: 0.05em;
+        }
+
+        .score-box.accent .value {
+            color: #e8883a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1a1a1a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            text-align: left;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #888;
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid #333;
+        }
+
+        td {
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid #2a2a2a;
+            font-size: 0.85rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .player-name {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .player-team {
+            color: #888;
+            font-size: 0.75rem;
+        }
+
+        .rating {
+            font-weight: 700;
+        }
+
+        .rating.platinum { color: #00cfff; }
+        .rating.gold { color: #ffd700; }
+        .rating.silver { color: #c0c0c0; }
+        .rating.bronze { color: #cd7f32; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'history' %}">&larr; My Drafts</a>
+        <a href="{% url 'home' %}" class="header-title">Giddey</a>
+        <span></span>
+    </div>
+
+    <div class="content">
+        <div class="date">{{ draft.completed_at|date:"M j, Y – g:i A" }}</div>
+
+        <div class="scores">
+            <div class="score-box">
+                <div class="value">{{ draft.talent_score }}</div>
+                <div class="label">Talent</div>
+            </div>
+            <div class="score-box">
+                <div class="value">{{ draft.chemistry_score }}</div>
+                <div class="label">Chem</div>
+            </div>
+            <div class="score-box accent">
+                <div class="value">{{ draft.total_score }}</div>
+                <div class="label">Total</div>
+            </div>
+            <div class="score-box">
+                <div class="value">{{ draft.optimal_score }}</div>
+                <div class="label">Optimal</div>
+            </div>
+            <div class="score-box accent">
+                <div class="value">{{ accuracy }}%</div>
+                <div class="label">Accuracy</div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Rd</th>
+                    <th>Pos</th>
+                    <th>Player</th>
+                    <th>OVR</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pick in picks %}
+                <tr>
+                    <td>{{ pick.round_number }}</td>
+                    <td>{{ pick.slot_position }}</td>
+                    <td>
+                        <span class="player-name">{{ pick.player.first_name }} {{ pick.player.last_name }}</span>
+                        <br><span class="player-team">{{ pick.player.team }}</span>
+                    </td>
+                    <td>
+                        <span class="rating {% if pick.player.rating >= 88 %}platinum{% elif pick.player.rating >= 82 %}gold{% elif pick.player.rating >= 76 %}silver{% else %}bronze{% endif %}">
+                            {{ pick.player.rating }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
