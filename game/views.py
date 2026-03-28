@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
@@ -389,8 +390,12 @@ def friends_view(request):
     ).select_related("challenger")
 
     challenges_sent = VsBattle.objects.filter(
-        challenger=user, status="pending"
+        challenger=user, status="pending", is_public=False
     ).select_related("challenged")
+
+    my_public_challenge = VsBattle.objects.filter(
+        challenger=user, is_public=True, status="pending"
+    ).exists()
 
     active_battles_qs = VsBattle.objects.filter(
         Q(challenger=user) | Q(challenged=user), status="accepted"
@@ -402,17 +407,82 @@ def friends_view(request):
         h2h = _head_to_head(user, opponent)
         b.opponent = opponent
         b.h2h_record = f"{h2h['wins']}-{h2h['losses']}"
+        my_draft = b.challenger_draft if b.challenger == user else b.challenged_draft
+        b.is_my_turn = my_draft is None
         active_battles.append(b)
+    active_battles.sort(key=lambda b: not b.is_my_turn)
+
+    # Add h2h records to sent challenges
+    challenges_sent_list = []
+    for c in challenges_sent:
+        h2h = _head_to_head(user, c.challenged)
+        c.h2h_record = f"{h2h['wins']}-{h2h['losses']}"
+        challenges_sent_list.append(c)
+    challenges_sent = challenges_sent_list
 
     completed_battles = VsBattle.objects.filter(
         Q(challenger=user) | Q(challenged=user), status="completed"
     ).select_related(
         "challenger", "challenged", "challenger_draft", "challenged_draft"
-    ).order_by("-created_at")[:20]
+    ).order_by("-created_at")[:25]
 
     # Annotate each completed battle with result info for the template
     battle_history = []
     h2h_cache = {}
+    # Overall stats
+    total_wins = total_losses = 0
+    today = timezone.now().date()
+    today_wins = today_losses = 0
+    streak_count = 0
+    streak_type = None
+
+    # Process ALL completed battles (not just last 20) for stats
+    all_completed = VsBattle.objects.filter(
+        Q(challenger=user) | Q(challenged=user), status="completed"
+    ).select_related(
+        "challenger", "challenged", "challenger_draft", "challenged_draft"
+    ).order_by("created_at")
+
+    for b in all_completed:
+        opponent = b.challenged if b.challenger == user else b.challenger
+        my_draft = b.challenger_draft if b.challenger == user else b.challenged_draft
+        opp_draft = b.challenged_draft if b.challenger == user else b.challenger_draft
+        if not my_draft or not opp_draft:
+            continue
+        if my_draft.total_score > opp_draft.total_score:
+            result = "W"
+        elif my_draft.total_score < opp_draft.total_score:
+            result = "L"
+        elif (
+            my_draft.duration_seconds is not None
+            and opp_draft.duration_seconds is not None
+            and my_draft.duration_seconds != opp_draft.duration_seconds
+        ):
+            result = "W" if my_draft.duration_seconds < opp_draft.duration_seconds else "L"
+        else:
+            result = "T"
+
+        if result == "W":
+            total_wins += 1
+            if b.created_at.date() == today:
+                today_wins += 1
+        elif result == "L":
+            total_losses += 1
+            if b.created_at.date() == today:
+                today_losses += 1
+
+        if result == streak_type:
+            streak_count += 1
+        else:
+            streak_type = result
+            streak_count = 1
+
+    overall_total = total_wins + total_losses
+    overall_pct = f".{round(total_wins / overall_total * 1000):03d}" if overall_total else "0"
+    today_total = today_wins + today_losses
+    today_pct = f".{round(today_wins / today_total * 1000):03d}" if today_total else "0"
+    streak_str = f"{streak_type}{streak_count}" if streak_type else "-"
+
     for b in completed_battles:
         opponent = b.challenged if b.challenger == user else b.challenger
         my_draft = b.challenger_draft if b.challenger == user else b.challenged_draft
@@ -453,8 +523,16 @@ def friends_view(request):
         "challenges_received": challenges_received,
         "challenges_sent": challenges_sent,
         "active_battles": active_battles,
+        "my_public_challenge": my_public_challenge,
         "battle_history": battle_history,
         "pending_count": _pending_count(user),
+        "vs_stats": {
+            "overall": f"{total_wins} - {total_losses}",
+            "overall_pct": overall_pct,
+            "today": f"{today_wins} - {today_losses}",
+            "today_pct": today_pct,
+            "streak": streak_str,
+        },
     })
 
 
@@ -559,6 +637,16 @@ def api_send_challenge(request):
     ).exists()
     if not is_friend:
         return JsonResponse({"error": "Not friends"}, status=403)
+
+    # Allow up to 3 pending invites per friend
+    pending_count = VsBattle.objects.filter(
+        challenger=request.user, challenged=target, status="pending", is_public=False
+    ).count()
+    if pending_count >= 3:
+        return JsonResponse(
+            {"error": "You already have 3 pending invites to this friend"},
+            status=400,
+        )
 
     battle = VsBattle.objects.create(challenger=request.user, challenged=target)
     return JsonResponse({"id": battle.id})
@@ -1118,3 +1206,446 @@ def vs_results_view(request, battle_id):
         "my_time_better": my_time_better,
         "opp_time_better": opp_time_better,
     })
+
+
+# ── Quick Match (Public Lobby) ────────────────────────────────────
+
+
+@login_required(login_url="login")
+def quick_match_view(request):
+    user = request.user
+    # Count user's pending public challenges
+    my_challenge_count = VsBattle.objects.filter(
+        challenger=user, is_public=True, status="pending"
+    ).count()
+    # First page of public challenges
+    public_challenges = VsBattle.objects.filter(
+        is_public=True, status="pending"
+    ).select_related("challenger").order_by("-created_at")[:25]
+
+    challenges_data = []
+    for c in public_challenges:
+        challenges_data.append({
+            "id": c.id,
+            "username": c.challenger.username,
+            "is_mine": c.challenger == user,
+        })
+
+    return render(request, "game/quick_match.html", {
+        "challenges": challenges_data,
+        "my_challenge_count": my_challenge_count,
+        "pending_count": _pending_count(user),
+    })
+
+
+@login_required(login_url="login")
+@require_POST
+def api_create_public_challenge(request):
+    user = request.user
+    # Allow up to 3 pending public challenges at a time
+    existing_count = VsBattle.objects.filter(
+        challenger=user, is_public=True, status="pending"
+    ).count()
+    if existing_count >= 3:
+        return JsonResponse(
+            {"error": "You already have 3 pending public challenges"},
+            status=400,
+        )
+    battle = VsBattle.objects.create(
+        challenger=user, challenged=None, is_public=True, status="pending"
+    )
+    return JsonResponse({"id": battle.id})
+
+
+@login_required(login_url="login")
+@require_POST
+def api_accept_public_challenge(request, battle_id):
+    with transaction.atomic():
+        battle = (
+            VsBattle.objects.select_for_update()
+            .filter(id=battle_id, is_public=True, status="pending")
+            .first()
+        )
+        if not battle:
+            return JsonResponse(
+                {"error": "Challenge no longer available"}, status=404
+            )
+        if battle.challenger == request.user:
+            return JsonResponse(
+                {"error": "Cannot accept your own challenge"}, status=400
+            )
+        battle.challenged = request.user
+        battle.status = "accepted"
+        battle.save()
+        pre_generate_rounds(battle)
+    return JsonResponse({"battle_id": battle.id})
+
+
+@login_required(login_url="login")
+@require_POST
+def api_cancel_public_challenge(request, battle_id):
+    battle = get_object_or_404(
+        VsBattle,
+        id=battle_id,
+        challenger=request.user,
+        is_public=True,
+        status="pending",
+    )
+    battle.status = "cancelled"
+    battle.save()
+    return JsonResponse({"status": "cancelled"})
+
+
+@login_required(login_url="login")
+def api_list_public_challenges(request):
+    user = request.user
+    offset = int(request.GET.get("offset", 0))
+    limit = int(request.GET.get("limit", 25))
+    challenges = VsBattle.objects.filter(
+        is_public=True, status="pending"
+    ).select_related("challenger").order_by("-created_at")[offset:offset + limit + 1]
+
+    challenges = list(challenges)
+    has_more = len(challenges) > limit
+    challenges = challenges[:limit]
+
+    items = []
+    for c in challenges:
+        items.append({
+            "id": c.id,
+            "username": c.challenger.username,
+            "is_mine": c.challenger == user,
+        })
+
+    # Check if user's public challenge was accepted (for redirect)
+    my_accepted = VsBattle.objects.filter(
+        challenger=user, is_public=True, status="accepted"
+    ).order_by("-created_at").first()
+
+    return JsonResponse({
+        "challenges": items,
+        "has_more": has_more,
+        "my_challenge_accepted": my_accepted is not None,
+        "accepted_battle_id": my_accepted.id if my_accepted else None,
+    })
+
+
+def _battle_result(user, battle):
+    """Compute W/L/T result for a completed battle from user's perspective."""
+    my_draft = battle.challenger_draft if battle.challenger == user else battle.challenged_draft
+    opp_draft = battle.challenged_draft if battle.challenger == user else battle.challenger_draft
+    if not my_draft or not opp_draft:
+        return None, 0
+    if my_draft.total_score > opp_draft.total_score:
+        result = "W"
+    elif my_draft.total_score < opp_draft.total_score:
+        result = "L"
+    elif (
+        my_draft.duration_seconds is not None
+        and opp_draft.duration_seconds is not None
+        and my_draft.duration_seconds != opp_draft.duration_seconds
+    ):
+        result = "W" if my_draft.duration_seconds < opp_draft.duration_seconds else "L"
+    else:
+        result = "T"
+    point_diff = abs(my_draft.total_score - opp_draft.total_score)
+    return result, point_diff
+
+
+@login_required(login_url="login")
+def api_battle_history(request):
+    user = request.user
+    offset = int(request.GET.get("offset", 0))
+    limit = int(request.GET.get("limit", 25))
+
+    battles = VsBattle.objects.filter(
+        Q(challenger=user) | Q(challenged=user), status="completed"
+    ).select_related(
+        "challenger", "challenged", "challenger_draft", "challenged_draft"
+    ).order_by("-created_at")[offset:offset + limit + 1]
+
+    battles = list(battles)
+    has_more = len(battles) > limit
+    battles = battles[:limit]
+
+    h2h_cache = {}
+    items = []
+    for b in battles:
+        opponent = b.challenged if b.challenger == user else b.challenger
+        result, point_diff = _battle_result(user, b)
+        if result is None:
+            continue
+        if opponent.id not in h2h_cache:
+            h2h_cache[opponent.id] = _head_to_head(user, opponent)
+        h2h = h2h_cache[opponent.id]
+        items.append({
+            "id": b.id,
+            "opponent": opponent.username,
+            "result": result,
+            "point_diff": point_diff,
+            "h2h_record": f"{h2h['wins']}-{h2h['losses']}",
+        })
+
+    return JsonResponse({"items": items, "has_more": has_more})
+
+
+@login_required(login_url="login")
+def api_in_progress(request):
+    user = request.user
+    offset = int(request.GET.get("offset", 0))
+    limit = int(request.GET.get("limit", 25))
+
+    # Build unified sorted list: your_turn battles, public challenge, waiting battles, invite sent
+    items = []
+
+    active_battles_qs = VsBattle.objects.filter(
+        Q(challenger=user) | Q(challenged=user), status="accepted"
+    ).select_related("challenger", "challenged", "challenger_draft", "challenged_draft")
+
+    my_turn = []
+    waiting = []
+    for b in active_battles_qs:
+        opponent = b.challenged if b.challenger == user else b.challenger
+        h2h = _head_to_head(user, opponent)
+        my_draft = b.challenger_draft if b.challenger == user else b.challenged_draft
+        entry = {
+            "type": "your_turn" if my_draft is None else "waiting",
+            "id": b.id,
+            "opponent": opponent.username,
+            "h2h_record": f"{h2h['wins']}-{h2h['losses']}",
+            "url": f"/vs/{b.id}/draft/",
+        }
+        if my_draft is None:
+            my_turn.append(entry)
+        else:
+            waiting.append(entry)
+
+    items.extend(my_turn)
+
+    # Public challenge
+    my_public = VsBattle.objects.filter(
+        challenger=user, is_public=True, status="pending"
+    ).first()
+    if my_public:
+        items.append({
+            "type": "public",
+            "id": my_public.id,
+            "opponent": "Open in Lobby",
+            "h2h_record": "",
+            "url": "/versus/quick-match/",
+        })
+
+    items.extend(waiting)
+
+    # Invite sent (direct challenges with a target user)
+    challenges_sent = VsBattle.objects.filter(
+        challenger=user, status="pending", is_public=False,
+        challenged__isnull=False, link_code__isnull=True,
+    ).select_related("challenged")
+    for c in challenges_sent:
+        h2h = _head_to_head(user, c.challenged)
+        items.append({
+            "type": "invite_sent",
+            "id": c.id,
+            "opponent": c.challenged.username,
+            "h2h_record": f"{h2h['wins']}-{h2h['losses']}",
+            "url": None,
+        })
+
+    # Link battles (sent via link, no challenged user yet)
+    link_battles = VsBattle.objects.filter(
+        challenger=user, status="pending", is_public=False,
+        link_code__isnull=False,
+    )
+    for lb in link_battles:
+        items.append({
+            "type": "link_sent",
+            "id": lb.id,
+            "opponent": "Sent via Link",
+            "h2h_record": "",
+            "sub_label": "Private Match",
+            "url": None,
+        })
+
+    total = len(items)
+    page = items[offset:offset + limit]
+    has_more = (offset + limit) < total
+
+    return JsonResponse({"items": page, "has_more": has_more})
+
+
+# ── Find a Foe ──────────────────────────────────────────────────────
+
+
+@login_required(login_url="login")
+def find_foe_view(request):
+    user = request.user
+    friends = _get_friends(user)
+    friend_ids = {f.id for f in friends}
+
+    # Friends with h2h records
+    friends_with_records = []
+    for f in friends:
+        h2h = _head_to_head(user, f)
+        friends_with_records.append({
+            "id": f.id,
+            "username": f.username,
+            "record": f"{h2h['wins']}-{h2h['losses']}",
+        })
+
+    # Top 10 rivals: non-friends ordered by number of completed battles
+    battles = VsBattle.objects.filter(
+        Q(challenger=user) | Q(challenged=user),
+        status="completed",
+    ).select_related("challenger", "challenged")
+
+    rival_counts = {}
+    for b in battles:
+        opp = b.challenged if b.challenger == user else b.challenger
+        if opp and opp.id not in friend_ids and opp.id != user.id:
+            rival_counts[opp.id] = rival_counts.get(opp.id, 0) + 1
+
+    top_rival_ids = sorted(rival_counts, key=rival_counts.get, reverse=True)[:10]
+    rival_users = {u.id: u for u in User.objects.filter(id__in=top_rival_ids)}
+
+    top_rivals = []
+    for rank, uid in enumerate(top_rival_ids, 1):
+        rival = rival_users[uid]
+        h2h = _head_to_head(user, rival)
+        top_rivals.append({
+            "rank": rank,
+            "id": rival.id,
+            "username": rival.username,
+            "record": f"{h2h['wins']}-{h2h['losses']}",
+        })
+
+    return render(request, "game/find_foe.html", {
+        "friends_with_records": friends_with_records,
+        "top_rivals": top_rivals,
+        "pending_count": _pending_count(user),
+    })
+
+
+@login_required(login_url="login")
+def api_search_users_paginated(request):
+    q = request.GET.get("q", "").strip()
+    offset = int(request.GET.get("offset", 0))
+    limit = 50
+    if len(q) < 1:
+        return JsonResponse({"users": [], "has_more": False})
+    users = list(
+        User.objects.filter(username__icontains=q)
+        .exclude(id=request.user.id)
+        .values("id", "username")[offset:offset + limit + 1]
+    )
+    has_more = len(users) > limit
+    users = users[:limit]
+    return JsonResponse({"users": users, "has_more": has_more})
+
+
+@login_required(login_url="login")
+@require_POST
+def api_challenge_any_user(request):
+    body = json.loads(request.body)
+    user_id = body.get("user_id")
+    try:
+        target = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "User not found"}, status=404)
+    if target == request.user:
+        return JsonResponse({"error": "Cannot challenge yourself"}, status=400)
+    pending = VsBattle.objects.filter(
+        challenger=request.user, challenged=target,
+        status="pending", is_public=False,
+    ).count()
+    if pending >= 3:
+        return JsonResponse(
+            {"error": "You already have 3 pending invites to this user"},
+            status=400,
+        )
+    battle = VsBattle.objects.create(
+        challenger=request.user, challenged=target, is_public=False,
+    )
+    return JsonResponse({"id": battle.id})
+
+
+# ── Send Link ───────────────────────────────────────────────────────
+
+
+@login_required(login_url="login")
+@require_POST
+def api_create_link_battle(request):
+    # Only allow 1 pending link invite at a time
+    existing = VsBattle.objects.filter(
+        challenger=request.user, status="pending",
+        is_public=False, link_code__isnull=False,
+    ).exists()
+    if existing:
+        return JsonResponse(
+            {"error": "You already have a pending link invite"},
+            status=400,
+        )
+    from django.utils.crypto import get_random_string
+    chars = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    code = get_random_string(6, chars)
+    while VsBattle.objects.filter(link_code=code).exists():
+        code = get_random_string(6, chars)
+    battle = VsBattle.objects.create(
+        challenger=request.user,
+        challenged=None,
+        is_public=False,
+        status="pending",
+        link_code=code,
+    )
+    return JsonResponse({"id": battle.id, "link_code": code})
+
+
+@login_required(login_url="login")
+@require_POST
+def api_cancel_challenge(request, battle_id):
+    """Cancel any pending challenge (public, private, or link) owned by the user."""
+    battle = get_object_or_404(
+        VsBattle, id=battle_id, challenger=request.user, status="pending",
+    )
+    battle.status = "cancelled"
+    battle.save()
+    return JsonResponse({"status": "cancelled"})
+
+
+# ── Join via Link ───────────────────────────────────────────────────
+
+
+def join_via_link_view(request, code):
+    battle = VsBattle.objects.filter(link_code=code).first()
+    if not battle or battle.status != "pending" or battle.challenged is not None:
+        return render(request, "game/link_expired.html")
+
+    user = request.user
+
+    if not user.is_authenticated:
+        from django.utils.crypto import get_random_string
+        guest_username = f"guest_{get_random_string(6, 'abcdefghijklmnopqrstuvwxyz0123456789')}"
+        guest_user = User.objects.create_user(username=guest_username)
+        guest_user.set_unusable_password()
+        guest_user.save()
+        login(request, guest_user)
+        request.session["is_guest_user"] = True
+        user = guest_user
+
+    if battle.challenger == user:
+        return redirect("quick_match")
+
+    with transaction.atomic():
+        battle_locked = (
+            VsBattle.objects.select_for_update()
+            .filter(id=battle.id, status="pending", challenged__isnull=True)
+            .first()
+        )
+        if not battle_locked:
+            return render(request, "game/link_expired.html")
+        battle_locked.challenged = user
+        battle_locked.status = "accepted"
+        battle_locked.save()
+        pre_generate_rounds(battle_locked)
+
+    return redirect("vs_draft", battle_id=battle.id)

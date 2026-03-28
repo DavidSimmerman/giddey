@@ -1,0 +1,612 @@
+{% extends "game/base.html" %}
+
+{% block title %}Quick Match{% endblock %}
+
+{% block nav_versus_active %}active{% endblock %}
+
+{% block extra_css %}
+body {
+    background: #111;
+}
+
+/* ── Page header ── */
+.qm-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    position: relative;
+    background: #1a1a1a;
+    border-bottom: 1px solid #222;
+}
+
+.qm-back {
+    position: absolute;
+    left: 1rem;
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.qm-header-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.qm-content {
+    flex: 1;
+    max-width: 600px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1rem 0.75rem;
+    padding-bottom: 340px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Title area ── */
+.qm-title {
+    font-size: 1.4rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: #fff;
+    letter-spacing: 0.1em;
+}
+
+.qm-subtitle {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 0.1rem;
+}
+
+/* ── VS badge ── */
+.vs-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2rem auto;
+}
+
+.vs-badge-inner {
+    width: 56px;
+    height: 56px;
+    border: 2px solid #fff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(45deg);
+}
+
+.vs-badge-text {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #fff;
+    transform: rotate(-45deg);
+    letter-spacing: 0.05em;
+}
+
+.vs-badge-text span {
+    display: block;
+    line-height: 1;
+}
+
+/* ── Start New Match heading ── */
+.qm-start-heading {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.qm-start-heading h2 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.3rem;
+}
+
+.qm-start-heading p {
+    font-size: 0.8rem;
+    color: #888;
+    line-height: 1.4;
+}
+
+/* ── Challenge list ── */
+.challenge-list {
+    background: #1a1a1a;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.challenge-item {
+    display: flex;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.challenge-item:last-child {
+    border-bottom: none;
+}
+
+.challenge-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.challenge-name {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.pill-start {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #111;
+    background: #e8883a;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+.pill-start:hover {
+    background: #f09a4a;
+}
+
+.pill-waiting {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #a3763c;
+    background: rgba(232, 136, 58, 0.15);
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+/* ── Bottom card ── */
+.send-challenge-card {
+    position: fixed;
+    bottom: 64px;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    padding: 0.75rem;
+}
+
+.send-challenge-inner {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #1a1a1a;
+    border-radius: 16px;
+    padding: 1rem;
+}
+
+.send-challenge-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.75rem;
+}
+
+.challenge-action-row {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+}
+
+.challenge-action-row:last-child {
+    margin-bottom: 0;
+}
+
+.action-private {
+    background: #2a2a2a;
+}
+
+.action-public {
+    background: #e8883a;
+}
+
+.action-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-right: 0.75rem;
+}
+
+.action-icon-hex {
+    width: 32px;
+    height: 38px;
+    clip-path: polygon(50% 0%, 100% 15%, 100% 85%, 50% 100%, 0% 85%, 0% 15%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 900;
+    color: #fff;
+}
+
+.action-private .action-icon-hex {
+    background: #fff;
+    color: #2a2a2a;
+}
+
+.action-public .action-icon-hex {
+    background: #111;
+    color: #e8883a;
+}
+
+.action-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.action-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.action-private .action-title {
+    color: #fff;
+}
+
+.action-public .action-title {
+    color: #1a1a1a;
+}
+
+.action-sub {
+    font-size: 0.7rem;
+    margin-top: 0.05rem;
+}
+
+.action-private .action-sub {
+    color: #888;
+}
+
+.action-public .action-sub {
+    color: #5a3010;
+}
+
+.action-right {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+
+.send-link-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    background: #5a3010;
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem;
+    cursor: pointer;
+    color: #e8a860;
+    justify-content: center;
+}
+
+.send-link-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.send-link-btn span {
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.private-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.private-row .challenge-action-row {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.action-public .action-right {
+    cursor: pointer;
+}
+
+.public-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    text-align: left;
+}
+
+.empty-lobby {
+    text-align: center;
+    color: #555;
+    font-size: 0.8rem;
+    padding: 1rem 0;
+    font-style: italic;
+}
+
+.load-spinner {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+}
+
+.load-spinner::after {
+    content: '';
+    width: 24px;
+    height: 24px;
+    border: 3px solid #333;
+    border-top-color: #e8883a;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+{% endblock %}
+
+{% block header %}
+<div class="qm-header">
+    <a href="{% url 'versus' %}" class="qm-back">&larr;</a>
+    <span class="qm-header-title">Versus</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="qm-content">
+    <div class="qm-title">Quick Match</div>
+    <div class="qm-subtitle">Public Lobby</div>
+
+    <div class="qm-hero" id="qm-hero" {% if challenges %}style="display:none"{% endif %}>
+        <div class="vs-badge">
+            <div class="vs-badge-inner">
+                <div class="vs-badge-text">
+                    <span>V</span>
+                    <span>S</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="qm-start-heading">
+            <h2>Start New Match</h2>
+            <p>Challenge the public or send a private invite to a friend.</p>
+        </div>
+    </div>
+
+    <div class="challenge-list" id="challenge-list">
+        {% for c in challenges %}
+        <div class="challenge-item" data-id="{{ c.id }}">
+            <div class="challenge-info">
+                <div class="challenge-name">{{ c.username }}</div>
+            </div>
+            {% if c.is_mine %}
+            <span class="pill-waiting">Waiting</span>
+            {% else %}
+            <button class="pill-start" onclick="acceptChallenge({{ c.id }})">Start</button>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="empty-lobby" id="empty-lobby">No public challenges yet. Create one below!</div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Bottom card -->
+<div class="send-challenge-card">
+    <div class="send-challenge-inner">
+        <div class="send-challenge-label">
+            <span>Send a Challenge</span>
+        </div>
+
+        <!-- Private match (non-functional) -->
+        <div class="private-row">
+            <a href="{% url 'find_foe' %}" class="challenge-action-row action-private" style="text-decoration:none;cursor:pointer;">
+                <div class="action-icon">
+                    <div class="action-icon-hex">VS</div>
+                </div>
+                <div class="action-text">
+                    <div class="action-title">Create Private Match</div>
+                    <div class="action-sub">Challenge a friend</div>
+                </div>
+            </a>
+            <div class="send-link-btn" onclick="sendLink()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                <span>Send Link</span>
+            </div>
+        </div>
+
+        <!-- Public challenge -->
+        <div class="challenge-action-row action-public" id="public-action">
+            <button class="public-btn" id="create-public-btn" onclick="createPublicChallenge()">
+                <div class="action-icon">
+                    <div class="action-icon-hex">VS</div>
+                </div>
+                <div class="action-text">
+                    <div class="action-title">Create Public Challenge</div>
+                    <div class="action-sub">Anyone can accept.</div>
+                </div>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const csrfToken = '{{ csrf_token }}';
+    let myChallCount = {{ my_challenge_count }};
+
+    async function sendLink() {
+        const resp = await fetch('/api/create-link-battle/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({}),
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+            const text = `Try to beat me in a 1v1 Giddey draft: ${window.location.origin}/challenge/join/${data.link_code}`;
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (e) {
+                // Fallback for older browsers
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+            const btn = document.querySelector('.send-link-btn');
+            const origHTML = btn.innerHTML;
+            btn.innerHTML = '<span style="font-size:0.7rem;font-weight:700;">Copied!</span>';
+            setTimeout(() => { btn.innerHTML = origHTML; }, 2000);
+        } else {
+            alert(data.error || 'Failed to create link');
+        }
+    }
+
+    async function createPublicChallenge() {
+        if (myChallCount >= 3) {
+            alert('You already have 3 pending public challenges.');
+            return;
+        }
+        const resp = await fetch('/api/public-challenge/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({}),
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+            myChallCount++;
+            refreshList();
+        } else {
+            alert(data.error || 'Failed to create challenge');
+        }
+    }
+
+    async function acceptChallenge(id) {
+        const resp = await fetch(`/api/public-challenge/${id}/accept/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({}),
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+            window.location.href = `/vs/${data.battle_id}/draft/`;
+        } else {
+            alert(data.error || 'Challenge no longer available');
+            refreshList();
+        }
+    }
+
+    const list = document.getElementById('challenge-list');
+    const hero = document.getElementById('qm-hero');
+    let lobbyOffset = 0;
+    let lobbyHasMore = true;
+    let lobbyLoading = false;
+
+    function renderItem(c) {
+        const pill = c.is_mine
+            ? '<span class="pill-waiting">Waiting</span>'
+            : `<button class="pill-start" onclick="acceptChallenge(${c.id})">Start</button>`;
+        return `<div class="challenge-item" data-id="${c.id}"><div class="challenge-info"><div class="challenge-name">${c.username}</div></div>${pill}</div>`;
+    }
+
+    function updateHero() {
+        const hasItems = list.querySelector('.challenge-item');
+        hero.style.display = hasItems ? 'none' : '';
+    }
+
+    async function loadMore() {
+        if (lobbyLoading || !lobbyHasMore) return;
+        lobbyLoading = true;
+        const spinner = document.createElement('div');
+        spinner.className = 'load-spinner';
+        if (lobbyOffset > 0) list.appendChild(spinner);
+        try {
+            const resp = await fetch(`/api/public-challenges/?offset=${lobbyOffset}&limit=25`);
+            const data = await resp.json();
+            if (spinner.parentNode) spinner.remove();
+            if (data.challenges.length > 0) {
+                // Remove empty message if present
+                const empty = list.querySelector('.empty-lobby');
+                if (empty) empty.remove();
+                list.insertAdjacentHTML('beforeend', data.challenges.map(renderItem).join(''));
+            }
+            lobbyOffset += data.challenges.length;
+            lobbyHasMore = data.has_more;
+            updateHero();
+            // Redirect check
+            if (data.my_challenge_accepted && data.accepted_battle_id) {
+                window.location.href = `/vs/${data.accepted_battle_id}/draft/`;
+            }
+        } catch (e) {
+            if (spinner.parentNode) spinner.remove();
+        }
+        lobbyLoading = false;
+    }
+
+    // Full refresh (polling) — reloads first page to pick up new challenges
+    async function refreshList() {
+        try {
+            const resp = await fetch('/api/public-challenges/?offset=0&limit=25');
+            const data = await resp.json();
+            // Redirect check
+            if (data.my_challenge_accepted && data.accepted_battle_id) {
+                window.location.href = `/vs/${data.accepted_battle_id}/draft/`;
+                return;
+            }
+            // Re-render the list from scratch with first page
+            list.innerHTML = data.challenges.length === 0
+                ? '<div class="empty-lobby">No public challenges yet. Create one below!</div>'
+                : data.challenges.map(renderItem).join('');
+            lobbyOffset = data.challenges.length;
+            lobbyHasMore = data.has_more;
+            updateHero();
+        } catch (e) {
+            // Ignore polling errors
+        }
+    }
+
+    // Scroll observer for infinite scroll
+    window.addEventListener('scroll', () => {
+        const scrollBottom = window.innerHeight + window.scrollY;
+        const docHeight = document.documentElement.scrollHeight;
+        if (scrollBottom >= docHeight - 200 && lobbyHasMore) {
+            loadMore();
+        }
+    });
+
+    // Poll every 5 seconds
+    setInterval(refreshList, 5000);
+
+    // Refresh on page show (back/forward nav)
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) refreshList();
+    });
+</script>
+{% endblock %}

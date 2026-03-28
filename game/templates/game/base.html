@@ -128,7 +128,7 @@
             </svg>
             <span class="nav-label">Draft</span>
         </a>
-        <a href="{% url 'friends' %}" class="nav-tab {% block nav_versus_active %}{% endblock %}">
+        <a href="{% url 'versus' %}" class="nav-tab {% block nav_versus_active %}{% endblock %}">
             {% if pending_count %}<span class="nav-badge">{{ pending_count }}</span>{% endif %}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <text x="12" y="16" text-anchor="middle" font-size="12" font-weight="900" fill="currentColor" stroke="none">VS</text>

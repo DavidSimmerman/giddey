@@ -1,0 +1,532 @@
+{% extends "game/base.html" %}
+
+{% block title %}Find a Foe{% endblock %}
+
+{% block nav_versus_active %}active{% endblock %}
+
+{% block extra_css %}
+body {
+    background: #111;
+}
+
+.ff-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    position: relative;
+    background: #1a1a1a;
+    border-bottom: 1px solid #222;
+}
+
+.ff-back {
+    position: absolute;
+    left: 1rem;
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.ff-header-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.ff-content {
+    flex: 1;
+    max-width: 600px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1rem 0.75rem;
+    padding-bottom: 100px;
+    display: flex;
+    flex-direction: column;
+}
+
+.ff-title {
+    font-size: 1.4rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: #fff;
+    letter-spacing: 0.1em;
+}
+
+.ff-subtitle {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 0.1rem;
+    margin-bottom: 1rem;
+}
+
+/* ── Search bar ── */
+.ff-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+}
+
+.ff-search-bar svg {
+    width: 18px;
+    height: 18px;
+    color: #888;
+    flex-shrink: 0;
+}
+
+.ff-search-bar span {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+/* ── Sections ── */
+.ff-section-title {
+    font-size: 0.85rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.ff-list {
+    background: #1a1a1a;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.ff-item {
+    display: flex;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.ff-item:last-child {
+    border-bottom: none;
+}
+
+.ff-rank {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #e8883a;
+    min-width: 28px;
+    margin-right: 0.5rem;
+}
+
+.ff-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ff-name {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.ff-record {
+    font-size: 0.7rem;
+    color: #999;
+    margin-top: 0.1rem;
+}
+
+.ff-challenge-btn {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #111;
+    background: #e8883a;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.ff-challenge-btn:hover {
+    background: #f09a4a;
+}
+
+.ff-challenge-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.ff-empty {
+    color: #666;
+    font-size: 0.8rem;
+    font-style: italic;
+    padding: 0.75rem 1rem;
+}
+
+/* ── Search Overlay ── */
+.search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #111;
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+}
+
+.search-overlay.active {
+    display: flex;
+}
+
+.search-overlay-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #1a1a1a;
+    border-bottom: 1px solid #222;
+}
+
+.search-overlay-input {
+    flex: 1;
+    padding: 0.6rem 0.8rem 0.6rem 2.2rem;
+    border-radius: 10px;
+    border: none;
+    background: #2a2a2a;
+    color: #fff;
+    font-size: 0.9rem;
+    outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 0.6rem center;
+}
+
+.search-overlay-input::placeholder {
+    color: #888;
+}
+
+.search-cancel-btn {
+    background: none;
+    border: none;
+    color: #e8883a;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    padding: 0.5rem;
+}
+
+.search-results {
+    flex: 1;
+    overflow-y: auto;
+    max-width: 600px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.search-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem;
+    color: #888;
+    gap: 0.5rem;
+}
+
+.search-empty-state .search-icon {
+    width: 48px;
+    height: 48px;
+    background: #2a2a2a;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-empty-state .search-icon svg {
+    width: 20px;
+    height: 20px;
+    color: #666;
+}
+
+.search-empty-state span {
+    font-size: 0.85rem;
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.search-result-name {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.load-spinner {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+}
+
+.load-spinner::after {
+    content: '';
+    width: 24px;
+    height: 24px;
+    border: 3px solid #333;
+    border-top-color: #e8883a;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Toast ── */
+.ff-toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #333;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 300;
+    max-width: 90%;
+    text-align: center;
+}
+
+.ff-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.ff-toast.error {
+    background: #7f1d1d;
+    color: #fca5a5;
+}
+{% endblock %}
+
+{% block header %}
+<div class="ff-header">
+    <a href="{% url 'quick_match' %}" class="ff-back">&larr;</a>
+    <span class="ff-header-title">Quick Match</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="ff-content">
+    <div class="ff-title">Find a Foe</div>
+    <div class="ff-subtitle">Challenge a rival to a Versus draft</div>
+
+    <!-- Search bar (opens overlay) -->
+    <div class="ff-search-bar" onclick="openSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <span>Search a username</span>
+    </div>
+
+    <!-- Friends -->
+    {% if friends_with_records %}
+    <div class="ff-section-title">Friends</div>
+    <div class="ff-list">
+        {% for f in friends_with_records %}
+        <div class="ff-item">
+            <div class="ff-info">
+                <div class="ff-name">{{ f.username }}</div>
+                <div class="ff-record">VS: {{ f.record }}</div>
+            </div>
+            <button class="ff-challenge-btn" onclick="challengeUser({{ f.id }}, this)">Challenge</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Top 10 Rivals -->
+    {% if top_rivals %}
+    <div class="ff-section-title">Top 10 Rivals</div>
+    <div class="ff-list">
+        {% for r in top_rivals %}
+        <div class="ff-item">
+            <span class="ff-rank">{{ r.rank }}</span>
+            <div class="ff-info">
+                <div class="ff-name">{{ r.username }}</div>
+                <div class="ff-record">VS: {{ r.record }}</div>
+            </div>
+            <button class="ff-challenge-btn" onclick="challengeUser({{ r.id }}, this)">Challenge</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not friends_with_records and not top_rivals %}
+    <div class="ff-empty">No friends or rivals yet. Search for a username above to challenge someone.</div>
+    {% endif %}
+</div>
+
+<!-- Toast -->
+<div class="ff-toast" id="ff-toast"></div>
+
+<!-- Search Overlay -->
+<div class="search-overlay" id="search-overlay">
+    <div class="search-overlay-header">
+        <input type="text" class="search-overlay-input" id="search-input" placeholder="Search..." autocomplete="off" autocapitalize="off">
+        <button class="search-cancel-btn" onclick="closeSearch()">Cancel</button>
+    </div>
+    <div class="search-results" id="search-results">
+        <div class="search-empty-state" id="search-empty">
+            <div class="search-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+            </div>
+            <span>Search by username</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const csrfToken = '{{ csrf_token }}';
+    const overlay = document.getElementById('search-overlay');
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    const searchEmpty = document.getElementById('search-empty');
+    let searchTimeout;
+    let searchOffset = 0;
+    let searchHasMore = false;
+    let searchLoading = false;
+    let currentQuery = '';
+
+    function openSearch() {
+        overlay.classList.add('active');
+        searchInput.focus();
+    }
+
+    function closeSearch() {
+        overlay.classList.remove('active');
+        searchInput.value = '';
+        searchResults.innerHTML = '';
+        searchResults.appendChild(searchEmpty);
+        searchEmpty.style.display = '';
+        currentQuery = '';
+        searchOffset = 0;
+        searchHasMore = false;
+    }
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        const q = searchInput.value.trim();
+        if (q.length < 1) {
+            searchResults.innerHTML = '';
+            searchResults.appendChild(searchEmpty);
+            searchEmpty.style.display = '';
+            currentQuery = '';
+            return;
+        }
+        searchTimeout = setTimeout(() => {
+            currentQuery = q;
+            searchOffset = 0;
+            searchHasMore = false;
+            // Clear old results
+            searchResults.innerHTML = '';
+            searchEmpty.style.display = 'none';
+            loadSearchResults();
+        }, 300);
+    });
+
+    async function loadSearchResults() {
+        if (searchLoading || !currentQuery) return;
+        searchLoading = true;
+        const spinner = document.createElement('div');
+        spinner.className = 'load-spinner';
+        searchResults.appendChild(spinner);
+        try {
+            const resp = await fetch(`/api/search-users-paginated/?q=${encodeURIComponent(currentQuery)}&offset=${searchOffset}&limit=50`);
+            const data = await resp.json();
+            if (spinner.parentNode) spinner.remove();
+            if (data.users.length === 0 && searchOffset === 0) {
+                searchResults.innerHTML = '<div class="ff-empty" style="text-align:center;padding:2rem;">No users found</div>';
+            } else {
+                data.users.forEach(u => {
+                    const div = document.createElement('div');
+                    div.className = 'search-result-item';
+                    div.innerHTML = `<span class="search-result-name">${u.username}</span><button class="ff-challenge-btn" onclick="challengeUser(${u.id}, this)">Challenge</button>`;
+                    searchResults.appendChild(div);
+                });
+            }
+            searchOffset += data.users.length;
+            searchHasMore = data.has_more;
+        } catch (e) {
+            if (spinner.parentNode) spinner.remove();
+        }
+        searchLoading = false;
+    }
+
+    // Infinite scroll for search results
+    document.getElementById('search-results').addEventListener('scroll', function() {
+        if (!searchHasMore || searchLoading) return;
+        const el = this;
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
+            loadSearchResults();
+        }
+    });
+
+    let toastTimer;
+    function showToast(msg, isError) {
+        const toast = document.getElementById('ff-toast');
+        toast.textContent = msg;
+        toast.className = 'ff-toast show' + (isError ? ' error' : '');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 2500);
+    }
+
+    async function challengeUser(userId, btn) {
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        try {
+            const resp = await fetch('/api/challenge-any/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ user_id: userId }),
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                btn.textContent = 'Sent!';
+                btn.style.background = '#4ade80';
+                showToast('Challenge sent!', false);
+            } else {
+                showToast(data.error || 'Failed to send challenge', true);
+                btn.textContent = 'Challenge';
+                btn.disabled = false;
+            }
+        } catch (e) {
+            showToast('Something went wrong', true);
+            btn.textContent = 'Challenge';
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}

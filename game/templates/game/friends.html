@@ -1,39 +1,246 @@
 {% extends "game/base.html" %}
 
-{% block title %}Friends{% endblock %}
+{% block title %}Versus{% endblock %}
 
 {% block nav_versus_active %}active{% endblock %}
 
 {% block extra_css %}
+body {
+    background: #1a1a1a;
+}
+
 .content {
     flex: 1;
     max-width: 600px;
     width: 100%;
     margin: 0 auto;
-    padding: 1.5rem 1rem;
+    padding: 1rem 0.75rem;
+    padding-bottom: 100px;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
-.section {
-    background: #1a1a1a;
-    border-radius: 12px;
-    padding: 1.25rem;
+/* ── Stat boxes ── */
+.stat-boxes {
+    display: flex;
+    gap: 0.5rem;
 }
 
-.section-title {
-    font-size: 0.75rem;
+.stat-box {
+    flex: 1;
+    background: #222;
+    border: 1px solid #e8883a;
+    border-radius: 10px;
+    padding: 0.6rem 0.5rem;
+    text-align: center;
+}
+
+.stat-box-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.stat-box-value {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 0.02em;
+}
+
+.stat-box-sub {
+    font-size: 0.6rem;
+    color: #666;
+    margin-top: 0.15rem;
+}
+
+.stat-box-value.streak-W { color: #4ade80; }
+.stat-box-value.streak-L { color: #ef4444; }
+
+/* ── Section headers ── */
+.section-header {
+    font-size: 0.85rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #fff;
+    margin-top: 0.5rem;
+}
+
+/* ── Notifications (requests, challenges, active) ── */
+.notification-section {
+    background: #222;
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.notification-title {
+    font-size: 0.7rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     color: #e8883a;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #333;
-    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
-/* Search */
+/* ── Result list ── */
+.result-list {
+    background: #222;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid #333;
+}
+
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.result-opponent {
+    font-weight: 800;
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.result-meta {
+    font-size: 0.7rem;
+    color: #999;
+}
+
+.result-points {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.result-points .result-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+
+.result-points .result-diff-value {
+    font-size: 1.2rem;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+.result-points .result-diff-value small {
+    font-size: 0.65rem;
+    font-weight: 600;
+}
+
+.result-W .result-label { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+.result-L .result-label { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+.result-T .result-label { background: rgba(255, 255, 255, 0.1); color: #ccc; }
+.result-W .result-diff-value { color: #4ade80; }
+.result-L .result-diff-value { color: #ef4444; }
+.result-T .result-diff-value { color: #ccc; }
+
+/* ── Cards (friend, request, battle) ── */
+.card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid #333;
+}
+
+.card-row:last-child {
+    border-bottom: none;
+}
+
+.card-name {
+    font-weight: 700;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.card-sub {
+    font-size: 0.7rem;
+    color: #999;
+}
+
+.card-actions {
+    display: flex;
+    gap: 0.4rem;
+}
+
+/* ── Buttons ── */
+.btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    transition: background 0.2s;
+}
+
+.btn-primary { background: #e8883a; color: #1a1a1a; }
+.btn-primary:hover { background: #f09a4a; }
+.btn-accept { background: #4ade80; color: #1a1a1a; }
+.btn-accept:hover { background: #22c55e; }
+.btn-decline { background: #444; color: #ccc; }
+.btn-decline:hover { background: #555; }
+.btn-danger { background: #ef4444; color: #fff; }
+.btn-danger:hover { background: #dc2626; }
+.btn-challenge { background: #7c3aed; color: #fff; }
+.btn-challenge:hover { background: #6d28d9; }
+
+.waiting-pill {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #999;
+    background: #333;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.pill-draft {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    background: #e8883a;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.empty-text {
+    color: #666;
+    font-size: 0.8rem;
+    font-style: italic;
+    padding: 0.25rem 0;
+}
+
+/* ── Search ── */
 .search-row {
     display: flex;
     gap: 0.5rem;
@@ -42,12 +249,12 @@
 
 .search-row input {
     flex: 1;
-    padding: 0.6rem 0.75rem;
+    padding: 0.55rem 0.7rem;
     border-radius: 8px;
     border: 1px solid #444;
-    background: #2a2a2a;
+    background: #1a1a1a;
     color: #fff;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     outline: none;
 }
 
@@ -73,113 +280,15 @@
 .suggestion-item {
     padding: 0.5rem 0.75rem;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .suggestion-item:hover { background: #333; }
 
-.btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
-    font-weight: 700;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    transition: background 0.2s;
-}
-
-.btn-primary {
-    background: #e8883a;
-    color: #1a1a1a;
-}
-
-.btn-primary:hover { background: #f09a4a; }
-
-.btn-accept {
-    background: #4ade80;
-    color: #1a1a1a;
-}
-
-.btn-accept:hover { background: #22c55e; }
-
-.btn-decline {
-    background: #555;
-    color: #ccc;
-}
-
-.btn-decline:hover { background: #666; }
-
-.btn-danger {
-    background: #ef4444;
-    color: #fff;
-}
-
-.btn-danger:hover { background: #dc2626; }
-
-.btn-challenge {
-    background: #7c3aed;
-    color: #fff;
-}
-
-.btn-challenge:hover { background: #6d28d9; }
-
-.btn-sm {
-    padding: 0.35rem 0.75rem;
-    font-size: 0.75rem;
-}
-
-/* Cards */
-.friend-card, .request-card, .battle-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #2a2a2a;
-}
-
-.friend-card:last-child, .request-card:last-child, .battle-card:last-child {
-    border-bottom: none;
-}
-
-.friend-name {
-    font-weight: 700;
-    color: #fff;
-    font-size: 0.95rem;
-}
-
-.friend-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.empty-text {
-    color: #666;
-    font-size: 0.85rem;
-    font-style: italic;
-}
-
-.battle-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-}
-
-.battle-opponent {
-    font-weight: 700;
-    color: #fff;
-}
-
-.battle-status {
-    font-size: 0.75rem;
-    color: #999;
-}
-
 .status-msg {
     padding: 0.5rem 0.75rem;
     border-radius: 8px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     margin-top: 0.5rem;
     display: none;
 }
@@ -188,189 +297,210 @@
 .status-msg.success { background: #14532d; color: #4ade80; }
 .status-msg.error { background: #7f1d1d; color: #fca5a5; }
 
-.result-points {
+/* ── Bottom CTA ── */
+.bottom-cta {
+    position: fixed;
+    bottom: 64px;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    padding: 0.75rem 0.75rem 0.75rem;
+    background: #1a1a1a;
+    border: none;
+    box-shadow: 0 -8px 12px 4px #1a1a1a;
+}
+
+.cta-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.9rem 1rem;
+    border-radius: 12px;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: filter 0.2s;
+    background: #e8883a;
+    color: #1a1a1a;
+    width: 100%;
+}
+
+.cta-btn:hover { filter: brightness(1.1); }
+
+.cta-icon {
+    width: 32px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    clip-path: polygon(50% 0%, 100% 15%, 100% 85%, 50% 100%, 0% 85%, 0% 15%);
+    background: #1a1a1a;
+}
+
+.cta-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.cta-text {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    text-align: right;
-    flex-shrink: 0;
+    gap: 0.1rem;
 }
 
-.result-points .result-label {
+.cta-title {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+}
+
+.cta-sub {
     font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    padding: 0.15rem 0.5rem;
-    border-radius: 4px;
+    opacity: 0.7;
+    font-weight: 500;
 }
 
-.result-points .result-diff-value {
-    font-size: 1.2rem;
-    font-weight: 900;
-    line-height: 1.2;
+.load-spinner {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
 }
 
-.result-points .result-diff-value small {
-    font-size: 0.7rem;
-    font-weight: 600;
+.load-spinner::after {
+    content: '';
+    width: 24px;
+    height: 24px;
+    border: 3px solid #333;
+    border-top-color: #e8883a;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
 }
 
-.result-W .result-label { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
-.result-L .result-label { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
-.result-T .result-label { background: rgba(255, 255, 255, 0.1); color: #ccc; }
-.result-W .result-diff-value { color: #4ade80; }
-.result-L .result-diff-value { color: #ef4444; }
-.result-T .result-diff-value { color: #ccc; }
-
-.waiting-pill {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #999;
-    background: #333;
-    padding: 0.3rem 0.75rem;
-    border-radius: 999px;
-    white-space: nowrap;
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 {% endblock %}
 
 {% block content %}
 <div class="content">
-    <!-- Add Friend -->
-    <div class="section">
-        <div class="section-title">Add Friend</div>
-        <div class="search-row">
+    <!-- Stat boxes -->
+    <div class="stat-boxes">
+        <div class="stat-box">
+            <div class="stat-box-label">Overall</div>
+            <div class="stat-box-value">{{ vs_stats.overall }}</div>
+            <div class="stat-box-sub">Pct: {{ vs_stats.overall_pct }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-label">Today</div>
+            <div class="stat-box-value">{{ vs_stats.today }}</div>
+            <div class="stat-box-sub">Pct: {{ vs_stats.today_pct }}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-label">Streak</div>
+            <div class="stat-box-value {% if vs_stats.streak|first == 'W' %}streak-W{% elif vs_stats.streak|first == 'L' %}streak-L{% endif %}">{{ vs_stats.streak }}</div>
+        </div>
+    </div>
+
+    <!-- Pending Requests -->
+    {% if pending_received %}
+    <div class="notification-section">
+        <div class="notification-title">Friend Requests</div>
+        {% for req in pending_received %}
+        <div class="card-row" id="req-{{ req.id }}">
+            <span class="card-name">{{ req.from_user.username }}</span>
+            <div class="card-actions">
+                <button class="btn btn-accept" onclick="respondRequest({{ req.id }}, 'accept')">Accept</button>
+                <button class="btn btn-decline" onclick="respondRequest({{ req.id }}, 'decline')">Decline</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Incoming Challenges -->
+    {% if challenges_received %}
+    <div class="notification-section">
+        <div class="notification-title">Incoming Challenges</div>
+        {% for c in challenges_received %}
+        <div class="card-row" id="challenge-{{ c.id }}">
+            <div>
+                <span class="card-name">{{ c.challenger.username }}</span>
+                <div class="card-sub">wants to battle</div>
+            </div>
+            <div class="card-actions">
+                <button class="btn btn-accept" onclick="respondChallenge({{ c.id }}, 'accept')">Accept</button>
+                <button class="btn btn-decline" onclick="respondChallenge({{ c.id }}, 'decline')">Decline</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- In-Progress -->
+    <div id="in-progress-section" style="display:none;">
+        <div class="section-header">In-Progress</div>
+        <div class="result-list" id="in-progress-list"></div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-section" style="display:none;">
+        <div class="section-header">Results</div>
+        <div class="result-list" id="results-list"></div>
+    </div>
+
+    <!-- Friends List -->
+    <div class="notification-section">
+        <div class="notification-title">Friends</div>
+        <div class="search-row" style="margin-bottom: 0.75rem;">
             <input type="text" id="search-input" placeholder="Search username..." autocomplete="off">
             <div class="suggestions" id="suggestions"></div>
             <button class="btn btn-primary" id="send-btn" onclick="sendFriendRequest()">Add</button>
         </div>
         <div class="status-msg" id="search-status"></div>
-    </div>
-
-    <!-- Pending Requests -->
-    {% if pending_received %}
-    <div class="section">
-        <div class="section-title">Friend Requests</div>
-        {% for req in pending_received %}
-        <div class="request-card" id="req-{{ req.id }}">
-            <span class="friend-name">{{ req.from_user.username }}</span>
-            <div class="friend-actions">
-                <button class="btn btn-accept btn-sm" onclick="respondRequest({{ req.id }}, 'accept')">Accept</button>
-                <button class="btn btn-decline btn-sm" onclick="respondRequest({{ req.id }}, 'decline')">Decline</button>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Pending Challenges Received -->
-    {% if challenges_received %}
-    <div class="section">
-        <div class="section-title">Incoming Challenges</div>
-        {% for c in challenges_received %}
-        <div class="battle-card" id="challenge-{{ c.id }}">
-            <div class="battle-info">
-                <span class="battle-opponent">{{ c.challenger.username }}</span>
-                <span class="battle-status">wants to battle</span>
-            </div>
-            <div class="friend-actions">
-                <button class="btn btn-accept btn-sm" onclick="respondChallenge({{ c.id }}, 'accept')">Accept</button>
-                <button class="btn btn-decline btn-sm" onclick="respondChallenge({{ c.id }}, 'decline')">Decline</button>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Active Battles -->
-    {% if active_battles %}
-    <div class="section">
-        <div class="section-title">Active Battles</div>
-        {% for b in active_battles %}
-        {% if b.challenger == user and not b.challenger_draft or b.challenged == user and not b.challenged_draft %}
-        <div class="battle-card">
-            <div class="battle-info">
-                <span class="battle-opponent">{{ b.opponent.username }}</span>
-                <span class="battle-status">VS: {{ b.h2h_record }}</span>
-            </div>
-            <div class="friend-actions">
-                <a href="{% url 'vs_draft' b.id %}" class="btn btn-primary btn-sm">Draft</a>
-            </div>
-        </div>
-        {% else %}
-        <a href="{% url 'vs_draft' b.id %}" class="battle-card" style="text-decoration:none;color:inherit;">
-            <div class="battle-info">
-                <span class="battle-opponent">{{ b.opponent.username }}</span>
-                <span class="battle-status">VS: {{ b.h2h_record }}</span>
-            </div>
-            <span class="waiting-pill">Waiting for Opp.</span>
-        </a>
-        {% endif %}
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Friends List -->
-    <div class="section">
-        <div class="section-title">Friends</div>
         {% if friends %}
             {% for friend in friends %}
-            <div class="friend-card" id="friend-{{ friend.id }}">
-                <span class="friend-name">{{ friend.username }}</span>
-                <div class="friend-actions">
-                    <button class="btn btn-challenge btn-sm" onclick="sendChallenge({{ friend.id }})">Challenge</button>
-                    <button class="btn btn-decline btn-sm" onclick="removeFriend({{ friend.id }})">Remove</button>
+            <div class="card-row" id="friend-{{ friend.id }}">
+                <span class="card-name">{{ friend.username }}</span>
+                <div class="card-actions">
+                    <button class="btn btn-challenge" onclick="sendChallenge({{ friend.id }})">Challenge</button>
+                    <button class="btn btn-decline" onclick="removeFriend({{ friend.id }})">Remove</button>
                 </div>
             </div>
             {% endfor %}
         {% else %}
-            <div class="empty-text">No friends yet. Search for users above to add friends.</div>
+            <div class="empty-text">No friends yet. Search above to add friends.</div>
         {% endif %}
     </div>
 
     <!-- Sent Requests -->
     {% if pending_sent %}
-    <div class="section">
-        <div class="section-title">Sent Requests</div>
+    <div class="notification-section">
+        <div class="notification-title">Sent Requests</div>
         {% for req in pending_sent %}
-        <div class="request-card">
-            <span class="friend-name">{{ req.to_user.username }}</span>
-            <span class="battle-status">Pending</span>
+        <div class="card-row">
+            <span class="card-name">{{ req.to_user.username }}</span>
+            <span class="card-sub">Pending</span>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Sent Challenges -->
-    {% if challenges_sent %}
-    <div class="section">
-        <div class="section-title">Sent Challenges</div>
-        {% for c in challenges_sent %}
-        <div class="battle-card">
-            <span class="friend-name">{{ c.challenged.username }}</span>
-            <span class="battle-status">Waiting for response</span>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
+</div>
 
-    <!-- Battle History -->
-    {% if battle_history %}
-    <div class="section">
-        <div class="section-title">Battle History</div>
-        {% for b in battle_history %}
-        <a href="{% url 'vs_results' b.id %}" class="battle-card" style="text-decoration:none;color:inherit;">
-            <div class="battle-info">
-                <span class="battle-opponent">{{ b.opponent.username }}</span>
-                <span class="battle-status">VS: {{ b.h2h_record }}</span>
-            </div>
-            <div class="result-points result-{{ b.result }}">
-                <span class="result-label">{% if b.result == "W" %}Won by{% elif b.result == "L" %}Lost by{% else %}Tied{% endif %}</span>
-                {% if b.result != "T" %}<span class="result-diff-value">{{ b.point_diff }} <small>Points</small></span>{% endif %}
-            </div>
-        </a>
-        {% endfor %}
-    </div>
-    {% endif %}
+<!-- Bottom CTA -->
+<div class="bottom-cta">
+    <a href="{% url 'quick_match' %}" class="cta-btn">
+        <div class="cta-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#e8883a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#fff" stroke="#fff"/>
+            </svg>
+        </div>
+        <div class="cta-text">
+            <span class="cta-title">Start Quick Match</span>
+            <span class="cta-sub">View the lobby or challenge a friend.</span>
+        </div>
+    </a>
 </div>
 {% endblock %}
 
@@ -504,5 +634,121 @@
             }
         }
     }
+
+    // ── Lazy-loaded In-Progress ──
+    const ipSection = document.getElementById('in-progress-section');
+    const ipList = document.getElementById('in-progress-list');
+    let ipOffset = 0;
+    let ipHasMore = true;
+    let ipLoading = false;
+
+    function renderIPItem(item) {
+        let meta;
+        if (item.type === 'link_sent') meta = `<span class="result-meta">${item.sub_label || 'Private Match'}</span>`;
+        else if (item.type === 'public') meta = `<span class="result-meta">Public Challenge</span>`;
+        else meta = item.h2h_record ? `<span class="result-meta">VS: ${item.h2h_record}</span>` : `<span class="result-meta">Public Challenge</span>`;
+        let pill;
+        if (item.type === 'your_turn') pill = '<span class="pill-draft">Your Turn</span>';
+        else if (item.type === 'public') pill = '<span class="waiting-pill">Waiting</span>';
+        else if (item.type === 'waiting') pill = '<span class="waiting-pill">Waiting for Opp.</span>';
+        else if (item.type === 'link_sent') pill = '<span class="waiting-pill">Sent via Link</span>';
+        else pill = '<span class="waiting-pill">Invite Sent</span>';
+
+        const cancellable = ['invite_sent', 'link_sent', 'public'].includes(item.type);
+        if (item.url && !cancellable) {
+            return `<a href="${item.url}" class="result-item"><div class="result-info"><span class="result-opponent">${item.opponent}</span>${meta}</div>${pill}</a>`;
+        }
+        if (cancellable) {
+            return `<div class="result-item" style="cursor:pointer;" onclick="cancelChallenge(${item.id}, this)"><div class="result-info"><span class="result-opponent">${item.opponent}</span>${meta}</div>${pill}</div>`;
+        }
+        return `<div class="result-item"><div class="result-info"><span class="result-opponent">${item.opponent}</span>${meta}</div>${pill}</div>`;
+    }
+
+    async function cancelChallenge(id, el) {
+        const resp = await fetch(`/api/cancel-challenge/${id}/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({}),
+        });
+        if (resp.ok) {
+            el.remove();
+            // Hide section if empty
+            if (ipList.children.length === 0) ipSection.style.display = 'none';
+        }
+    }
+
+    async function loadMoreIP() {
+        if (ipLoading || !ipHasMore) return;
+        ipLoading = true;
+        const spinner = document.createElement('div');
+        spinner.className = 'load-spinner';
+        if (ipOffset > 0) ipList.appendChild(spinner);
+        try {
+            const resp = await fetch(`/api/in-progress/?offset=${ipOffset}&limit=25`);
+            const data = await resp.json();
+            if (spinner.parentNode) spinner.remove();
+            if (data.items.length > 0) {
+                ipSection.style.display = '';
+                ipList.insertAdjacentHTML('beforeend', data.items.map(renderIPItem).join(''));
+            }
+            ipOffset += data.items.length;
+            ipHasMore = data.has_more;
+        } catch (e) {
+            if (spinner.parentNode) spinner.remove();
+        }
+        ipLoading = false;
+    }
+
+    // ── Lazy-loaded Results ──
+    const resSection = document.getElementById('results-section');
+    const resList = document.getElementById('results-list');
+    let resOffset = 0;
+    let resHasMore = true;
+    let resLoading = false;
+
+    function renderResItem(item) {
+        let label, diffHtml = '';
+        if (item.result === 'W') label = 'Won by';
+        else if (item.result === 'L') label = 'Lost by';
+        else label = 'Tied';
+        if (item.result !== 'T') diffHtml = `<span class="result-diff-value">${item.point_diff} <small>Points</small></span>`;
+        return `<a href="/vs/${item.id}/results/" class="result-item"><div class="result-info"><span class="result-opponent">${item.opponent}</span><span class="result-meta">VS: ${item.h2h_record}</span></div><div class="result-points result-${item.result}"><span class="result-label">${label}</span>${diffHtml}</div></a>`;
+    }
+
+    async function loadMoreRes() {
+        if (resLoading || !resHasMore) return;
+        resLoading = true;
+        const spinner = document.createElement('div');
+        spinner.className = 'load-spinner';
+        if (resOffset > 0) resList.appendChild(spinner);
+        try {
+            const resp = await fetch(`/api/battle-history/?offset=${resOffset}&limit=25`);
+            const data = await resp.json();
+            if (spinner.parentNode) spinner.remove();
+            if (data.items.length > 0) {
+                resSection.style.display = '';
+                resList.insertAdjacentHTML('beforeend', data.items.map(renderResItem).join(''));
+            }
+            resOffset += data.items.length;
+            resHasMore = data.has_more;
+        } catch (e) {
+            if (spinner.parentNode) spinner.remove();
+        }
+        resLoading = false;
+    }
+
+    // ── Scroll observer ──
+    function onScroll() {
+        const scrollBottom = window.innerHeight + window.scrollY;
+        const docHeight = document.documentElement.scrollHeight;
+        if (scrollBottom >= docHeight - 200) {
+            if (ipHasMore) loadMoreIP();
+            else if (resHasMore) loadMoreRes();
+        }
+    }
+    window.addEventListener('scroll', onScroll);
+
+    // Initial load
+    loadMoreIP().then(() => loadMoreRes());
 </script>
 {% endblock %}

@@ -170,7 +170,10 @@ class VsBattle(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="battles_received",
+        null=True,
+        blank=True,
     )
+    is_public = models.BooleanField(default=False)
     status = models.CharField(
         max_length=20,
         choices=[
@@ -196,6 +199,7 @@ class VsBattle(models.Model):
         on_delete=models.SET_NULL,
         related_name="battle_as_challenged",
     )
+    link_code = models.CharField(max_length=8, null=True, blank=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

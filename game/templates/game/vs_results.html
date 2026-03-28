@@ -544,7 +544,7 @@
     <div class="header">
         <a href="{% url 'home' %}" class="header-title">Giddey</a>
         <div class="header-right">
-            <a href="{% url 'friends' %}">Friends</a>
+            <a href="{% url 'versus' %}">Friends</a>
             <a href="{% url 'home' %}">Home</a>
         </div>
     </div>
@@ -703,7 +703,7 @@
             {% if not waiting %}
             <button class="btn btn-primary" id="rematch-btn" onclick="sendRematch()">Rematch</button>
             {% endif %}
-            <a href="{% url 'friends' %}" class="btn btn-secondary">Friends</a>
+            <a href="{% url 'versus' %}" class="btn btn-secondary">Friends</a>
             <a href="{% url 'home' %}" class="btn btn-secondary">Home</a>
         </div>
     </div>
