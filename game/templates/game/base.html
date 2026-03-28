@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giddey – {% block title %}Home{% endblock %}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #c45e20;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 64px;
+        }
+
+        /* ── Top Bar ── */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: #1a1a1a;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #e8883a;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+
+        .header-username {
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        /* ── Bottom Navbar ── */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: #1a1a1a;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+            border-top: 1px solid #333;
+        }
+
+        .nav-tab {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #666;
+            flex: 1;
+            height: 100%;
+            transition: color 0.2s;
+            position: relative;
+        }
+
+        .nav-tab.active {
+            color: #fff;
+        }
+
+        .nav-tab svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        .nav-tab .nav-label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-tab .nav-badge {
+            position: absolute;
+            top: 6px;
+            right: 50%;
+            transform: translateX(14px);
+            background: #e8883a;
+            color: #fff;
+            font-size: 0.55rem;
+            font-weight: 700;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    {% block header %}
+    <div class="header">
+        <a href="{% url 'home' %}" class="header-title">Giddey</a>
+        {% if user.is_authenticated %}
+            <span class="header-username">{{ user.username }}</span>
+        {% endif %}
+    </div>
+    {% endblock %}
+
+    {% block content %}{% endblock %}
+
+    {% block bottom_nav %}
+    <nav class="bottom-nav">
+        <a href="{% url 'home' %}" class="nav-tab {% block nav_draft_active %}{% endblock %}">
+            <svg viewBox="0 0 24 28">
+                <path d="M12 1L22 7.5V20.5L12 27L2 20.5V7.5L12 1Z"/>
+            </svg>
+            <span class="nav-label">Draft</span>
+        </a>
+        <a href="{% url 'friends' %}" class="nav-tab {% block nav_versus_active %}{% endblock %}">
+            {% if pending_count %}<span class="nav-badge">{{ pending_count }}</span>{% endif %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <text x="12" y="16" text-anchor="middle" font-size="12" font-weight="900" fill="currentColor" stroke="none">VS</text>
+            </svg>
+            <span class="nav-label">Versus</span>
+        </a>
+        <a href="{% url 'history' %}" class="nav-tab {% block nav_leaderboard_active %}{% endblock %}">
+            <svg viewBox="0 0 24 24">
+                <rect x="3" y="13" width="5" height="9" rx="1"/>
+                <rect x="10" y="5" width="5" height="17" rx="1"/>
+                <rect x="17" y="9" width="5" height="13" rx="1"/>
+            </svg>
+            <span class="nav-label">Leaderboard</span>
+        </a>
+        <a href="{% url 'stats' %}" class="nav-tab {% block nav_stats_active %}{% endblock %}">
+            <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 22C4 17.5817 7.58172 14 12 14C16.4183 14 20 17.5817 20 22"/>
+            </svg>
+            <span class="nav-label">Stats</span>
+        </a>
+    </nav>
+    {% endblock %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -50,19 +50,22 @@ TIER_FILTERS = {
 }
 
 
+def _pending_count(user):
+    """Count pending friend requests + challenges for the navbar badge."""
+    if not user.is_authenticated:
+        return 0
+    return (
+        Friendship.objects.filter(to_user=user, status="pending").count()
+        + VsBattle.objects.filter(challenged=user, status="pending").count()
+    )
+
+
 def home(request):
     if not request.user.is_authenticated and not request.session.get("guest"):
         return redirect("login")
-    context = {}
-    if request.user.is_authenticated:
-        pending_friends = Friendship.objects.filter(
-            to_user=request.user, status="pending"
-        ).count()
-        pending_challenges = VsBattle.objects.filter(
-            challenged=request.user, status="pending"
-        ).count()
-        context["pending_count"] = pending_friends + pending_challenges
-    return render(request, "game/home.html", context)
+    return render(request, "game/home.html", {
+        "pending_count": _pending_count(request.user),
+    })
 
 
 def draft(request):
@@ -203,9 +206,19 @@ def api_save_draft(request):
 
 
 @login_required(login_url="login")
+def stats_view(request):
+    return render(request, "game/stats.html", {
+        "pending_count": _pending_count(request.user),
+    })
+
+
+@login_required(login_url="login")
 def history_view(request):
     drafts = request.user.drafts.all()
-    return render(request, "game/history.html", {"drafts": drafts})
+    return render(request, "game/history.html", {
+        "drafts": drafts,
+        "pending_count": _pending_count(request.user),
+    })
 
 
 @login_required(login_url="login")
@@ -310,6 +323,7 @@ def friends_view(request):
         "challenges_sent": challenges_sent,
         "active_battles": active_battles,
         "battle_history": battle_history,
+        "pending_count": _pending_count(user),
     })
 
 
