@@ -552,7 +552,9 @@
     <div class="content">
         <!-- Result Banner -->
         <div class="result-banner">
-            {% if is_tie %}
+            {% if waiting %}
+                <div class="result-text" style="color:#f59e0b;">Waiting for opponent...</div>
+            {% elif is_tie %}
                 <div class="result-text tied">TIE!</div>
             {% elif i_won %}
                 <div class="result-text won">YOU WON!</div>
@@ -602,29 +604,31 @@
 
             <!-- Opponent Column -->
             <div class="player-col">
-                <div class="player-name-box opp">{{ opponent.username }} ({{ h2h.total_opp_score }})</div>
+                <div class="player-name-box opp">{{ opponent.username }}{% if not waiting %} ({{ h2h.total_opp_score }}){% endif %}</div>
                 <div class="score-rows">
                     <div class="score-row">
                         <div class="sr-label">Talent</div>
-                        <div class="sr-value{% if opp_talent_better %} highlight{% endif %}">{{ opp_draft.talent_score }}</div>
+                        <div class="sr-value{% if opp_talent_better %} highlight{% endif %}">{% if waiting %}––{% else %}{{ opp_draft.talent_score }}{% endif %}</div>
                     </div>
                     <div class="score-row">
                         <div class="sr-label">Chem</div>
-                        <div class="sr-value{% if opp_chem_better %} highlight{% endif %}">{{ opp_draft.chemistry_score }}</div>
+                        <div class="sr-value{% if opp_chem_better %} highlight{% endif %}">{% if waiting %}––{% else %}{{ opp_draft.chemistry_score }}{% endif %}</div>
                     </div>
                     <div class="score-row total-row">
                         <div class="sr-label">Total</div>
-                        <div class="sr-value{% if not i_won and not is_tie %} highlight{% endif %}">{{ opp_draft.total_score }}</div>
+                        <div class="sr-value{% if not i_won and not is_tie and not waiting %} highlight{% endif %}">{% if waiting %}––{% else %}{{ opp_draft.total_score }}{% endif %}</div>
                     </div>
                 </div>
-                <div class="acc-row">Acc {{ opp_accuracy }}% | Max {{ opp_draft.optimal_score }}</div>
+                <div class="acc-row">{% if waiting %}–{% else %}Acc {{ opp_accuracy }}% | Max {{ opp_draft.optimal_score }}{% endif %}</div>
                 <div class="time-row{% if won_by_time and opp_time_better %} time-highlight{% endif %}">
                     <span class="time-icon">&#9201;</span>
-                    {{ opp_time }}
+                    {% if waiting %}–{% else %}{{ opp_time }}{% endif %}
                 </div>
+                {% if not waiting %}
                 <div class="view-draft-link">
                     <a href="{% url 'draft_detail' opp_draft.id %}">View Draft</a>
                 </div>
+                {% endif %}
             </div>
         </div>
 
@@ -686,6 +690,8 @@
                         <div class="sr-dot dot-{{ opp_pick.dot_color }}"></div>
                     </div>
                     <span class="sr-talent">{{ opp_pick.slot_score }}</span>
+                    {% elif waiting %}
+                    <span class="sr-talent" style="color:#666;">––</span>
                     {% endif %}
                 </div>
             </div>
@@ -694,7 +700,9 @@
 
         <!-- Actions -->
         <div class="actions">
+            {% if not waiting %}
             <button class="btn btn-primary" id="rematch-btn" onclick="sendRematch()">Rematch</button>
+            {% endif %}
             <a href="{% url 'friends' %}" class="btn btn-secondary">Friends</a>
             <a href="{% url 'home' %}" class="btn btn-secondary">Home</a>
         </div>
@@ -723,5 +731,18 @@
             }
         }
     </script>
+    {% if waiting %}
+    <script>
+        setInterval(() => {
+            fetch('/api/vs/{{ battle.id }}/status/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'completed') {
+                    window.location.href = '/vs/{{ battle.id }}/results/';
+                }
+            });
+        }, 5000);
+    </script>
+    {% endif %}
 </body>
 </html>

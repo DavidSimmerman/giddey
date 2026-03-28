@@ -1,0 +1,52 @@
+<script>
+const gridConnections = [
+    [0, 1], // SG–PF (row 1)
+    [0, 2], // SG–SF (diagonal)
+    [0, 3], // SG–PG (below)
+    [1, 4], // PF–PG (below)
+    [1, 5], // PF–SF (diagonal)
+    [2, 3], // SF–PG (row 2)
+    [2, 6], // SF–PF (below)
+    [3, 6], // PG–PF (below-left)
+    [3, 8], // PG–C
+    [4, 5], // PG–SF (row 2)
+    [4, 7], // PG–SG (below-right)
+    [4, 8], // PG–C
+    [5, 7], // SF–SG (below)
+    [6, 8], // PF–C
+    [7, 8]  // SG–C
+];
+
+function drawGridLines() {
+    const court = document.querySelector('.court');
+    const svg = document.getElementById('grid-lines');
+    const courtRect = court.getBoundingClientRect();
+
+    svg.setAttribute('viewBox', `0 0 ${courtRect.width} ${courtRect.height}`);
+    svg.innerHTML = '';
+
+    const slots = court.querySelectorAll('.hex-slot');
+    const centers = {};
+
+    slots.forEach(slot => {
+        const rect = slot.getBoundingClientRect();
+        // Connect at the bottom point of the hexagon (50% 100% of clip-path)
+        centers[slot.dataset.slot] = {
+            x: rect.left + rect.width / 2 - courtRect.left,
+            y: rect.top + rect.height - courtRect.top
+        };
+    });
+
+    gridConnections.forEach(([a, b]) => {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', centers[a].x);
+        line.setAttribute('y1', centers[a].y);
+        line.setAttribute('x2', centers[b].x);
+        line.setAttribute('y2', centers[b].y);
+        line.setAttribute('stroke', 'rgba(255, 255, 255, 0.25)');
+        line.setAttribute('stroke-width', '2.5');
+        line.setAttribute('data-connection', `${a}-${b}`);
+        svg.appendChild(line);
+    });
+}
+</script>

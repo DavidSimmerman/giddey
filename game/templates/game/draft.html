@@ -66,98 +66,7 @@
 				letter-spacing: 0.05em;
 			}
 
-			/* ── Court ── */
-			.court {
-				flex: 1;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				justify-content: space-evenly;
-				padding: 1rem 0.5rem;
-				gap: 0;
-				background: linear-gradient(180deg, #c45e20 0%, #a84e18 50%, #c45e20 100%);
-				position: relative;
-			}
-
-			.court svg.grid-lines {
-				position: absolute;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				pointer-events: none;
-				z-index: 0;
-			}
-
-			.row {
-				display: flex;
-				justify-content: center;
-				gap: 0.75rem;
-				width: 100%;
-				max-width: 550px;
-				position: relative;
-				z-index: 1;
-			}
-
-			.row-1 {
-				justify-content: space-between;
-				gap: 0;
-				padding: 0 0.25rem;
-				transform: translateY(30px);
-			}
-			.hex-spacer {
-				width: 68px;
-				visibility: hidden;
-			}
-			.row-2 {
-				justify-content: space-between;
-				gap: 0;
-				padding: 0 0.25rem;
-			}
-			.row-2 .hex-slot-wrapper:nth-child(2),
-			.row-2 .hex-slot-wrapper:nth-child(3) {
-				transform: translateY(60px);
-			}
-			.row-3 {
-				justify-content: space-between;
-				gap: 0;
-				padding: 0 0.25rem;
-			}
-			.row-4 {
-				justify-content: center;
-				gap: 0;
-				transform: translateY(-50px);
-			}
-
-			/* ── Hex Slot ── */
-			.hex-slot-wrapper {
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				gap: 0.3rem;
-				position: relative;
-			}
-
-			.hex-slot {
-				width: 68px;
-				height: 95px;
-				clip-path: polygon(50% 0%, 100% 15%, 100% 85%, 50% 100%, 0% 85%, 0% 15%);
-				background: #7a3a10;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				position: relative;
-				transition: background 0.2s;
-				cursor: default;
-			}
-
-			.hex-slot .empty-label {
-				font-size: 1.8rem;
-				font-weight: 900;
-				color: rgba(255, 255, 255, 0.15);
-				text-transform: uppercase;
-				user-select: none;
-			}
+			{% include "game/_court_css.html" %}
 
 			.hex-slot.dragover {
 				background: #9a5520;
@@ -174,69 +83,6 @@
 
 			.hex-slot.filled {
 				padding: 0;
-			}
-
-			.hex-slot.filled .empty-label {
-				display: none;
-			}
-
-			.hex-slot-wrapper::after {
-				content: '';
-				position: absolute;
-				top: 90px;
-				left: 50%;
-				transform: translateX(-50%);
-				width: 28px;
-				height: 10px;
-				background: #fff;
-				border-radius: 50%;
-				z-index: -1;
-				transition: background 0.3s;
-			}
-
-			.hex-slot-wrapper.dot-red::after {
-				background: #ef4444;
-			}
-			.hex-slot-wrapper.dot-yellow::after {
-				background: #f59e0b;
-			}
-			.hex-slot-wrapper.dot-green::after {
-				background: #4ade80;
-			}
-			.hex-slot-wrapper.dot-blue::after {
-				background: #3b82f6;
-			}
-
-			.slot-position-label {
-				position: absolute;
-				top: 85px;
-				font-size: 0.7rem;
-				font-weight: 700;
-				color: rgba(255, 255, 255, 0.5);
-				text-transform: uppercase;
-				letter-spacing: 0.05em;
-				white-space: nowrap;
-			}
-
-			/* Left-side labels */
-			.row-1 .hex-slot-wrapper:nth-child(2) .slot-position-label,
-			.row-2 .hex-slot-wrapper:nth-child(1) .slot-position-label,
-			.row-2 .hex-slot-wrapper:nth-child(2) .slot-position-label,
-			.row-3 .hex-slot-wrapper:nth-child(1) .slot-position-label {
-				right: calc(50% + 18px);
-			}
-
-			/* Right-side labels */
-			.row-1 .hex-slot-wrapper:nth-child(3) .slot-position-label,
-			.row-2 .hex-slot-wrapper:nth-child(3) .slot-position-label,
-			.row-2 .hex-slot-wrapper:nth-child(4) .slot-position-label,
-			.row-3 .hex-slot-wrapper:nth-child(2) .slot-position-label {
-				left: calc(50% + 18px);
-			}
-
-			/* Center label (C) */
-			.row-4 .slot-position-label {
-				top: 100px;
 			}
 
 			/* ── Tier color definitions ── */
@@ -934,57 +780,7 @@
 
 		<!-- Court Grid -->
 		<div class="court">
-			<svg class="grid-lines" id="grid-lines"></svg>
-			<!-- Row 1: SG, PF (with spacers to align with PGs) -->
-			<div class="row row-1">
-				<div class="hex-spacer"></div>
-				<div class="hex-slot-wrapper">
-					<div class="hex-slot" data-slot="0" data-position="SG"></div>
-					<div class="slot-position-label">SG</div>
-				</div>
-				<div class="hex-slot-wrapper">
-					<div class="hex-slot" data-slot="1" data-position="PF"></div>
-					<div class="slot-position-label">PF</div>
-				</div>
-				<div class="hex-spacer"></div>
-			</div>
-			<!-- Row 2: SF, PG, PG, SF -->
-			<div class="row row-2">
-				<div class="hex-slot-wrapper">
-					<div class="hex-slot" data-slot="2" data-position="SF"></div>
-					<div class="slot-position-label">SF</div>
-				</div>
-				<div class="hex-slot-wrapper">
-					<div class="hex-slot" data-slot="3" data-position="PG"></div>
-					<div class="slot-position-label">PG</div>
-				</div>
-				<div class="hex-slot-wrapper">
-					<div class="hex-slot" data-slot="4" data-position="PG"></div>
-					<div class="slot-position-label">PG</div>
-				</div>
-				<div class="hex-slot-wrapper">
-					<div class="hex-slot" data-slot="5" data-position="SF"></div>
-					<div class="slot-position-label">SF</div>
-				</div>
-			</div>
-			<!-- Row 3: PF, SG -->
-			<div class="row row-3">
-				<div class="hex-slot-wrapper">
-					<div class="hex-slot" data-slot="6" data-position="PF"></div>
-					<div class="slot-position-label">PF</div>
-				</div>
-				<div class="hex-slot-wrapper">
-					<div class="hex-slot" data-slot="7" data-position="SG"></div>
-					<div class="slot-position-label">SG</div>
-				</div>
-			</div>
-			<!-- Row 4: C -->
-			<div class="row row-4">
-				<div class="hex-slot-wrapper">
-					<div class="hex-slot" data-slot="8" data-position="C"></div>
-					<div class="slot-position-label">C</div>
-				</div>
-			</div>
+			{% include "game/_court_grid.html" %}
 		</div>
 
 		<!-- Draft Area -->
@@ -1351,12 +1147,7 @@
 
 			// ── Drop zones ──
 			function setupDropZones() {
-				document.querySelectorAll('.hex-slot').forEach(slot => {
-					const label = document.createElement('span');
-					label.className = 'empty-label';
-					label.textContent = 'G';
-					slot.appendChild(label);
-				});
+				// G labels are already in the shared _court_grid.html include
 			}
 
 			function placeCard(slot, player) {
@@ -1826,61 +1617,16 @@
 				}
 			}
 
-			// ── Grid lines ──
-			const gridConnections = [
-				[0, 1], // SG–PF (row 1)
-				[0, 2], // SG–SF (diagonal)
-				[0, 3], // SG–PG (below)
-				[1, 4], // PF–PG (below)
-				[1, 5], // PF–SF (diagonal)
-				[2, 3], // SF–PG (row 2)
-				[2, 6], // SF–PF (below)
-				[3, 6], // PG–PF (below-left)
-				[3, 8], // PG–C
-				[4, 5], // PG–SF (row 2)
-				[4, 7], // PG–SG (below-right)
-				[4, 8], // PG–C
-				[5, 7], // SF–SG (below)
-				[6, 8], // PF–C
-				[7, 8] // SG–C
-			];
-
-			function drawGridLines() {
-				const court = document.querySelector('.court');
-				const svg = document.getElementById('grid-lines');
-				const courtRect = court.getBoundingClientRect();
-
-				svg.setAttribute('viewBox', `0 0 ${courtRect.width} ${courtRect.height}`);
-				svg.innerHTML = '';
-
-				const slots = court.querySelectorAll('.hex-slot');
-				const centers = {};
-
-				slots.forEach(slot => {
-					const rect = slot.getBoundingClientRect();
-					// Connect at the bottom point of the hexagon (50% 100% of clip-path)
-					centers[slot.dataset.slot] = {
-						x: rect.left + rect.width / 2 - courtRect.left,
-						y: rect.top + rect.height - courtRect.top
-					};
-				});
-
-				gridConnections.forEach(([a, b]) => {
-					const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-					line.setAttribute('x1', centers[a].x);
-					line.setAttribute('y1', centers[a].y);
-					line.setAttribute('x2', centers[b].x);
-					line.setAttribute('y2', centers[b].y);
-					line.setAttribute('stroke', 'rgba(255, 255, 255, 0.25)');
-					line.setAttribute('stroke-width', '2.5');
-					line.setAttribute('data-connection', `${a}-${b}`);
-					svg.appendChild(line);
-				});
-
-				// Re-apply colors after redraw (e.g. on resize)
+		</script>
+		{% include "game/_court_lines_js.html" %}
+		<script>
+			// Wrap shared drawGridLines to re-apply chemistry colors
+			const _baseDrawGridLines = drawGridLines;
+			drawGridLines = function() {
+				_baseDrawGridLines();
 				const { lineChems } = calculateChemistry();
 				updateLineColors(lineChems);
-			}
+			};
 
 			// ── Init ──
 			document.addEventListener('DOMContentLoaded', () => {

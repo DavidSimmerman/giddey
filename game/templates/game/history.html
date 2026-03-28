@@ -84,7 +84,7 @@ h2 {
         {% for d in drafts %}
         <a class="draft-card" href="{% url 'draft_detail' d.id %}">
             <div class="draft-info">
-                <span class="draft-date">{{ d.completed_at|date:"M j, Y – g:i A" }}</span>
+                <span class="draft-date"><time datetime="{{ d.completed_at|date:'c' }}"></time></span>
                 <span class="draft-score">{{ d.total_score }} pts</span>
             </div>
             <div class="draft-right">
@@ -99,4 +99,17 @@ h2 {
         <p class="empty">No drafts yet. Go play one!</p>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('time[datetime]').forEach(el => {
+        const d = new Date(el.getAttribute('datetime'));
+        const month = d.toLocaleString('en-US', { month: 'short' });
+        const day = d.getDate();
+        const year = d.getFullYear();
+        const time = d.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        el.textContent = `${month} ${day}, ${year} – ${time}`;
+    });
+</script>
 {% endblock %}

@@ -188,16 +188,49 @@
 .status-msg.success { background: #14532d; color: #4ade80; }
 .status-msg.error { background: #7f1d1d; color: #fca5a5; }
 
-.result-badge {
-    font-size: 0.8rem;
-    font-weight: 800;
-    padding: 0.25rem 0.6rem;
-    border-radius: 6px;
+.result-points {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    flex-shrink: 0;
 }
 
-.result-W { background: #14532d; color: #4ade80; }
-.result-L { background: #7f1d1d; color: #fca5a5; }
-.result-T { background: #333; color: #ccc; }
+.result-points .result-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+
+.result-points .result-diff-value {
+    font-size: 1.2rem;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+.result-points .result-diff-value small {
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.result-W .result-label { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+.result-L .result-label { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+.result-T .result-label { background: rgba(255, 255, 255, 0.1); color: #ccc; }
+.result-W .result-diff-value { color: #4ade80; }
+.result-L .result-diff-value { color: #ef4444; }
+.result-T .result-diff-value { color: #ccc; }
+
+.waiting-pill {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #999;
+    background: #333;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
 {% endblock %}
 
 {% block content %}
@@ -253,31 +286,25 @@
     <div class="section">
         <div class="section-title">Active Battles</div>
         {% for b in active_battles %}
+        {% if b.challenger == user and not b.challenger_draft or b.challenged == user and not b.challenged_draft %}
         <div class="battle-card">
             <div class="battle-info">
-                <span class="battle-opponent">
-                    vs {% if b.challenger == user %}{{ b.challenged.username }}{% else %}{{ b.challenger.username }}{% endif %}
-                </span>
-                <span class="battle-status">
-                    {% if b.challenger == user and b.challenger_draft %}
-                        Waiting for opponent...
-                    {% elif b.challenged == user and b.challenged_draft %}
-                        Waiting for opponent...
-                    {% else %}
-                        Ready to draft
-                    {% endif %}
-                </span>
+                <span class="battle-opponent">{{ b.opponent.username }}</span>
+                <span class="battle-status">VS: {{ b.h2h_record }}</span>
             </div>
             <div class="friend-actions">
-                {% if b.challenger == user and not b.challenger_draft %}
-                    <a href="{% url 'vs_draft' b.id %}" class="btn btn-primary btn-sm">Draft</a>
-                {% elif b.challenged == user and not b.challenged_draft %}
-                    <a href="{% url 'vs_draft' b.id %}" class="btn btn-primary btn-sm">Draft</a>
-                {% else %}
-                    <span style="color:#999;font-size:0.8rem;">Waiting...</span>
-                {% endif %}
+                <a href="{% url 'vs_draft' b.id %}" class="btn btn-primary btn-sm">Draft</a>
             </div>
         </div>
+        {% else %}
+        <a href="{% url 'vs_draft' b.id %}" class="battle-card" style="text-decoration:none;color:inherit;">
+            <div class="battle-info">
+                <span class="battle-opponent">{{ b.opponent.username }}</span>
+                <span class="battle-status">VS: {{ b.h2h_record }}</span>
+            </div>
+            <span class="waiting-pill">Waiting for Opp.</span>
+        </a>
+        {% endif %}
         {% endfor %}
     </div>
     {% endif %}
@@ -333,10 +360,13 @@
         {% for b in battle_history %}
         <a href="{% url 'vs_results' b.id %}" class="battle-card" style="text-decoration:none;color:inherit;">
             <div class="battle-info">
-                <span class="battle-opponent">vs {{ b.opponent.username }}</span>
-                <span class="battle-status">{{ b.my_score }} – {{ b.opp_score }} &middot; {{ b.date|date:"M j" }}</span>
+                <span class="battle-opponent">{{ b.opponent.username }}</span>
+                <span class="battle-status">VS: {{ b.h2h_record }}</span>
             </div>
-            <span class="result-badge result-{{ b.result }}">{{ b.result }}</span>
+            <div class="result-points result-{{ b.result }}">
+                <span class="result-label">{% if b.result == "W" %}Won by{% elif b.result == "L" %}Lost by{% else %}Tied{% endif %}</span>
+                {% if b.result != "T" %}<span class="result-diff-value">{{ b.point_diff }} <small>Points</small></span>{% endif %}
+            </div>
         </a>
         {% endfor %}
     </div>
@@ -345,6 +375,19 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) location.reload();
+    });
+</script>
+<script>
+    document.querySelectorAll('time[datetime]').forEach(el => {
+        const d = new Date(el.getAttribute('datetime'));
+        const month = d.toLocaleString('en-US', { month: 'short' });
+        const day = d.getDate();
+        el.textContent = `${month} ${day}`;
+    });
+</script>
 <script>
     const csrfToken = '{{ csrf_token }}';
     const searchInput = document.getElementById('search-input');

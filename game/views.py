@@ -276,9 +276,17 @@ def friends_view(request):
         challenger=user, status="pending"
     ).select_related("challenged")
 
-    active_battles = VsBattle.objects.filter(
+    active_battles_qs = VsBattle.objects.filter(
         Q(challenger=user) | Q(challenged=user), status="accepted"
     ).select_related("challenger", "challenged", "challenger_draft", "challenged_draft")
+
+    active_battles = []
+    for b in active_battles_qs:
+        opponent = b.challenged if b.challenger == user else b.challenger
+        h2h = _head_to_head(user, opponent)
+        b.opponent = opponent
+        b.h2h_record = f"{h2h['wins']}-{h2h['losses']}"
+        active_battles.append(b)
 
     completed_battles = VsBattle.objects.filter(
         Q(challenger=user) | Q(challenged=user), status="completed"
@@ -288,6 +296,7 @@ def friends_view(request):
 
     # Annotate each completed battle with result info for the template
     battle_history = []
+    h2h_cache = {}
     for b in completed_battles:
         opponent = b.challenged if b.challenger == user else b.challenger
         my_draft = b.challenger_draft if b.challenger == user else b.challenged_draft
@@ -306,12 +315,18 @@ def friends_view(request):
             result = "W" if my_draft.duration_seconds < opp_draft.duration_seconds else "L"
         else:
             result = "T"
+        point_diff = abs(my_draft.total_score - opp_draft.total_score)
+        if opponent.id not in h2h_cache:
+            h2h_cache[opponent.id] = _head_to_head(user, opponent)
+        h2h = h2h_cache[opponent.id]
         battle_history.append({
             "id": b.id,
             "opponent": opponent,
             "my_score": my_draft.total_score,
             "opp_score": opp_draft.total_score,
             "result": result,
+            "point_diff": point_diff,
+            "h2h_record": f"{h2h['wins']}-{h2h['losses']}",
             "date": b.created_at,
         })
 
@@ -539,10 +554,51 @@ def vs_draft_view(request, battle_id):
         if battle.status == "completed":
             return redirect("vs_results", battle_id=battle.id)
         # Show results screen while waiting for opponent
-        return render(request, "game/draft_detail.html", {
-            "draft": my_draft,
-            "picks_json": json.dumps(_serialize_draft_picks(my_draft)),
-            "waiting_battle_id": battle.id,
+        opponent = battle.challenged if request.user == battle.challenger else battle.challenger
+        my_picks = list(
+            my_draft.picks.select_related("player", "player__team").order_by("round_number")
+        )
+        my_slot_info = _calc_slot_info(my_picks)
+        for pick in my_picks:
+            info = my_slot_info.get(pick.slot_index, {})
+            pick.slot_score = info.get("score", pick.player.talent_bonus)
+            pick.dot_color = info.get("dot_color", "white")
+
+        my_accuracy = (
+            round((my_draft.total_score / my_draft.optimal_score) * 100)
+            if my_draft.optimal_score > 0 else 100
+        )
+
+        def fmt_time(secs):
+            if secs is None:
+                return "--:--"
+            return f"{secs // 60}:{secs % 60:02d}"
+
+        round_pairs = [(i + 1, my_picks[i] if i < len(my_picks) else None, None) for i in range(len(my_picks))]
+
+        return render(request, "game/vs_results.html", {
+            "battle": battle,
+            "me": request.user,
+            "opponent": opponent,
+            "my_draft": my_draft,
+            "opp_draft": None,
+            "my_accuracy": my_accuracy,
+            "opp_accuracy": None,
+            "h2h": _head_to_head(request.user, opponent),
+            "i_won": False,
+            "is_tie": False,
+            "point_diff": 0,
+            "won_by_time": False,
+            "round_pairs": round_pairs,
+            "my_time": fmt_time(my_draft.duration_seconds),
+            "opp_time": "–",
+            "my_talent_better": False,
+            "opp_talent_better": False,
+            "my_chem_better": False,
+            "opp_chem_better": False,
+            "my_time_better": False,
+            "opp_time_better": False,
+            "waiting": True,
         })
     return render(request, "game/vs_draft.html", {"battle": battle})
 
