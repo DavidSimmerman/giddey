@@ -12,6 +12,7 @@ urlpatterns = [
     path('guest/', views.guest_view, name='guest'),
     path('logout/', views.logout_view, name='logout'),
     path('api/save-draft/', views.api_save_draft, name='api_save_draft'),
+    path('api/draft-progress/', views.api_draft_progress, name='api_draft_progress'),
     path('stats/', views.stats_view, name='stats'),
     path('history/', views.history_view, name='history'),
     path('history/<int:draft_id>/', views.draft_detail_view, name='draft_detail'),

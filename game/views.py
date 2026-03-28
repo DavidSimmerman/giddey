@@ -11,7 +11,7 @@ from django.views.decorators.http import require_POST
 from django.db.models import Q
 from django.utils import timezone
 
-from .models import Draft, DraftPick, Friendship, Player, VsBattle, VsBattleRound
+from .models import Draft, DraftPick, Friendship, Player, SoloDraftProgress, VsBattle, VsBattleRound
 
 # Tier odds per round: (platinum, gold, silver, bronze)
 # Hero % is merged into platinum since we don't have hero tier yet.
@@ -63,8 +63,18 @@ def _pending_count(user):
 def home(request):
     if not request.user.is_authenticated and not request.session.get("guest"):
         return redirect("login")
+    draft_progress = None
+    if request.user.is_authenticated:
+        try:
+            prog = SoloDraftProgress.objects.get(user=request.user)
+            draft_progress = {
+                "drafted_slots": prog.drafted_slots,
+            }
+        except SoloDraftProgress.DoesNotExist:
+            pass
     return render(request, "game/home.html", {
         "pending_count": _pending_count(request.user),
+        "draft_progress_json": json.dumps(draft_progress),
     })
 
 
@@ -203,6 +213,53 @@ def api_save_draft(request):
         )
 
     return JsonResponse({"id": draft.id})
+
+
+# ── Solo draft progress (save/restore on refresh) ────────────────────
+
+
+def api_draft_progress(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    if request.method == "GET":
+        try:
+            prog = SoloDraftProgress.objects.get(user=request.user)
+        except SoloDraftProgress.DoesNotExist:
+            return JsonResponse({"exists": False})
+        return JsonResponse({
+            "exists": True,
+            "current_round": prog.current_round,
+            "drafted_slots": prog.drafted_slots,
+            "drafted_player_ids": prog.drafted_player_ids,
+            "current_pool": prog.current_pool,
+            "picked_this_round": prog.picked_this_round,
+            "start_time": prog.start_time,
+        })
+
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+        SoloDraftProgress.objects.update_or_create(
+            user=request.user,
+            defaults={
+                "current_round": body["current_round"],
+                "drafted_slots": body["drafted_slots"],
+                "drafted_player_ids": body["drafted_player_ids"],
+                "current_pool": body["current_pool"],
+                "picked_this_round": body["picked_this_round"],
+                "start_time": body["start_time"],
+            },
+        )
+        return JsonResponse({"ok": True})
+
+    if request.method == "DELETE":
+        SoloDraftProgress.objects.filter(user=request.user).delete()
+        return JsonResponse({"ok": True})
+
+    return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
 @login_required(login_url="login")

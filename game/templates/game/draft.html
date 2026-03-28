@@ -855,13 +855,44 @@
 		</div>
 
 		<script>
-			const draftStartTime = Date.now();
+			let draftStartTime = Date.now();
 			let currentRound = 1;
 			const totalRounds = 9;
 			let draftedPlayerIds = [];
 			let draftedSlots = {};
 			let currentPool = [];
 			let pickedThisRound = false;
+
+			{% if user.is_authenticated %}
+			function saveProgress() {
+				const slotsToSave = {};
+				for (const key in draftedSlots) {
+					slotsToSave[key] = draftedSlots[key];
+				}
+				fetch('{% url "api_draft_progress" %}', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRFToken': '{{ csrf_token }}',
+					},
+					body: JSON.stringify({
+						current_round: currentRound,
+						drafted_slots: slotsToSave,
+						drafted_player_ids: draftedPlayerIds,
+						current_pool: currentPool,
+						picked_this_round: pickedThisRound,
+						start_time: draftStartTime,
+					}),
+				});
+			}
+
+			function clearProgress() {
+				fetch('{% url "api_draft_progress" %}', {
+					method: 'DELETE',
+					headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+				});
+			}
+			{% endif %}
 
 			function getTier(rating) {
 				if (rating >= 88) return 'platinum';
@@ -937,6 +968,7 @@
 				const resp = await fetch(`/api/random-players/?exclude=${exclude}&round=${currentRound}&positions=${positions}`);
 				currentPool = await resp.json();
 				renderPool();
+				{% if user.is_authenticated %}saveProgress();{% endif %}
 			}
 
 			function renderPool() {
@@ -1169,6 +1201,7 @@
 				if (dragEl) dragEl.style.visibility = 'hidden';
 
 				updateScore();
+				{% if user.is_authenticated %}saveProgress();{% endif %}
 			}
 
 			function calculateChemistry() {
@@ -1343,6 +1376,7 @@
 
 				// Save draft for authenticated users
 				{% if user.is_authenticated %}
+				clearProgress();
 				const picks = [];
 				for (const slotIndex in draftedSlots) {
 					const p = draftedSlots[slotIndex];
@@ -1629,8 +1663,55 @@
 			};
 
 			// ── Init ──
-			document.addEventListener('DOMContentLoaded', () => {
+			document.addEventListener('DOMContentLoaded', async () => {
 				setupDropZones();
+
+				{% if user.is_authenticated %}
+				// Try to restore in-progress draft
+				try {
+					const resp = await fetch('{% url "api_draft_progress" %}');
+					const data = await resp.json();
+					if (data.exists) {
+						draftStartTime = data.start_time;
+						currentRound = data.current_round;
+						draftedPlayerIds = data.drafted_player_ids;
+						draftedSlots = data.drafted_slots;
+						currentPool = data.current_pool;
+						pickedThisRound = data.picked_this_round;
+
+						document.getElementById('round-indicator').textContent = 'Round ' + currentRound + ' of ' + totalRounds;
+						if (currentRound >= totalRounds) {
+							document.getElementById('next-round-btn').textContent = 'Finish';
+						}
+
+						// Restore filled slots on the board
+						for (const slotIndex in draftedSlots) {
+							const player = draftedSlots[slotIndex];
+							const slot = document.querySelector(`.hex-slot[data-slot="${slotIndex}"]`);
+							if (slot) {
+								slot.innerHTML = buildCardHTML(player, true);
+								slot.classList.add('filled');
+								makeSlotDraggable(slot);
+							}
+						}
+
+						// Restore pool cards
+						renderPool();
+						if (pickedThisRound) {
+							document.querySelectorAll('.pool-card').forEach(card => {
+								card.classList.add('disabled');
+							});
+						}
+
+						updateScore();
+						requestAnimationFrame(() => drawGridLines());
+						return;
+					}
+				} catch (e) {
+					// Fall through to fresh draft
+				}
+				{% endif %}
+
 				fetchPlayers();
 				requestAnimationFrame(() => drawGridLines());
 			});

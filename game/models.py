@@ -116,6 +116,24 @@ class DraftPick(models.Model):
         return f"Round {self.round_number}: {self.player}"
 
 
+class SoloDraftProgress(models.Model):
+    """Stores in-progress solo draft state so refreshes don't lose data."""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="solo_draft_progress",
+    )
+    current_round = models.IntegerField(default=1)
+    drafted_slots = models.JSONField(default=dict)
+    drafted_player_ids = models.JSONField(default=list)
+    current_pool = models.JSONField(default=list)
+    picked_this_round = models.BooleanField(default=False)
+    start_time = models.BigIntegerField()  # JS Date.now() timestamp
+
+    def __str__(self):
+        return f"Draft progress for {self.user} – round {self.current_round}"
+
+
 class VsBattle(models.Model):
     challenger = models.ForeignKey(
         settings.AUTH_USER_MODEL,
