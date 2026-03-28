@@ -30,4 +30,5 @@ urlpatterns = [
     path('api/vs/<int:battle_id>/random-players/', views.api_vs_random_players, name='api_vs_random_players'),
     path('api/vs/<int:battle_id>/save-draft/', views.api_vs_save_draft, name='api_vs_save_draft'),
     path('api/vs/<int:battle_id>/status/', views.api_vs_status, name='api_vs_status'),
+    path('api/vs/<int:battle_id>/draft-progress/', views.api_vs_draft_progress, name='api_vs_draft_progress'),
 ]

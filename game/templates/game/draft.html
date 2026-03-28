@@ -967,6 +967,7 @@
 				const positions = getAvailablePositions().join(',');
 				const resp = await fetch(`/api/random-players/?exclude=${exclude}&round=${currentRound}&positions=${positions}`);
 				currentPool = await resp.json();
+				pickedThisRound = false;
 				renderPool();
 				{% if user.is_authenticated %}saveProgress();{% endif %}
 			}
@@ -974,9 +975,15 @@
 			function renderPool() {
 				const pool = document.getElementById('draft-pool');
 				pool.innerHTML = '';
-				pickedThisRound = false;
 
 				currentPool.forEach((player, index) => {
+					if (!player) {
+						const spacer = document.createElement('div');
+						spacer.className = 'pool-card';
+						spacer.style.visibility = 'hidden';
+						pool.appendChild(spacer);
+						return;
+					}
 					const card = document.createElement('div');
 					card.className = 'pool-card tier-' + getTier(player.rating);
 					card.dataset.index = index;
@@ -1199,6 +1206,9 @@
 					card.classList.add('disabled');
 				});
 				if (dragEl) dragEl.style.visibility = 'hidden';
+
+				// Null out picked player so the empty space is preserved on restore
+				currentPool = currentPool.map(p => p.id === player.id ? null : p);
 
 				updateScore();
 				{% if user.is_authenticated %}saveProgress();{% endif %}

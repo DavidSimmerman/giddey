@@ -484,12 +484,29 @@
 				border-top: 3px solid #333;
 			}
 
+			.draft-top-bar {
+				position: relative;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				width: 100%;
+			}
+
 			.round-indicator {
 				font-size: 0.9rem;
 				font-weight: 900;
 				color: #fff;
 				letter-spacing: 0.15em;
 				text-transform: uppercase;
+			}
+
+			.draft-timer {
+				position: absolute;
+				right: 0;
+				font-size: 0.9rem;
+				font-weight: 700;
+				color: #ccc;
+				font-variant-numeric: tabular-nums;
 			}
 
 			.draft-pool {
@@ -626,11 +643,7 @@
 					<div class="value" id="total-score">0</div>
 					<div class="label">Total</div>
 				</div>
-				<div class="score-box" style="background:#222;">
-					<div class="value" id="timer">0:00</div>
-					<div class="label">Time</div>
 				</div>
-			</div>
 		</div>
 
 		<!-- Court Grid -->
@@ -690,7 +703,10 @@
 
 		<!-- Draft Area -->
 		<div class="draft-area">
-			<div class="round-indicator" id="round-indicator">Round 1 of 9</div>
+			<div class="draft-top-bar">
+				<div class="round-indicator" id="round-indicator">Round 1 of 9</div>
+				<div class="draft-timer" id="draft-timer">0:00</div>
+			</div>
 			<div class="draft-pool" id="draft-pool"></div>
 			<button class="next-round-btn" id="next-round-btn" onclick="nextRound()">Next Round</button>
 		</div>
@@ -706,14 +722,23 @@
 		</div>
 
 		<script>
-			const draftStartTime = Date.now();
+			let draftStartTime = null;
+			let timerInterval = null;
 			const battleId = {{ battle.id }};
-			setInterval(() => {
+
+			function updateTimerDisplay() {
+				if (!draftStartTime) return;
 				const elapsed = Math.floor((Date.now() - draftStartTime) / 1000);
 				const mins = Math.floor(elapsed / 60);
 				const secs = elapsed % 60;
-				document.getElementById('timer').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
-			}, 1000);
+				document.getElementById('draft-timer').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+			}
+
+			function startTimer() {
+				if (draftStartTime) return;
+				draftStartTime = Date.now();
+				timerInterval = setInterval(updateTimerDisplay, 1000);
+			}
 
 			let currentRound = 1;
 			const totalRounds = 9;
@@ -721,6 +746,35 @@
 			let draftedSlots = {};
 			let currentPool = [];
 			let pickedThisRound = false;
+
+			function saveProgress() {
+				const slotsToSave = {};
+				for (const key in draftedSlots) {
+					slotsToSave[key] = draftedSlots[key];
+				}
+				fetch(`/api/vs/${battleId}/draft-progress/`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRFToken': '{{ csrf_token }}',
+					},
+					body: JSON.stringify({
+						current_round: currentRound,
+						drafted_slots: slotsToSave,
+						drafted_player_ids: draftedPlayerIds,
+						current_pool: currentPool,
+						picked_this_round: pickedThisRound,
+						start_time: draftStartTime,
+					}),
+				});
+			}
+
+			function clearProgress() {
+				fetch(`/api/vs/${battleId}/draft-progress/`, {
+					method: 'DELETE',
+					headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+				});
+			}
 
 			function getTier(rating) {
 				if (rating >= 88) return 'platinum';
@@ -795,15 +849,23 @@
 				const positions = getAvailablePositions().join(',');
 				const resp = await fetch(`/api/vs/${battleId}/random-players/?exclude=${exclude}&round=${currentRound}&positions=${positions}`);
 				currentPool = await resp.json();
+				pickedThisRound = false;
 				renderPool();
+				saveProgress();
 			}
 
 			function renderPool() {
 				const pool = document.getElementById('draft-pool');
 				pool.innerHTML = '';
-				pickedThisRound = false;
 
 				currentPool.forEach((player, index) => {
+					if (!player) {
+						const spacer = document.createElement('div');
+						spacer.className = 'pool-card';
+						spacer.style.visibility = 'hidden';
+						pool.appendChild(spacer);
+						return;
+					}
 					const card = document.createElement('div');
 					card.className = 'pool-card tier-' + getTier(player.rating);
 					card.dataset.index = index;
@@ -966,6 +1028,7 @@
 									dragSourceSlot.classList.remove('filled');
 								}
 								updateScore();
+								saveProgress();
 							}
 						} else if (!targetSlot.classList.contains('filled')) {
 							// Dragging from pool to empty slot
@@ -1017,6 +1080,7 @@
 			function placeCard(slot, player) {
 				if (pickedThisRound || slot.classList.contains('filled')) return;
 
+				startTimer();
 				const slotIndex = slot.dataset.slot;
 				player.pick_round = currentRound;
 				draftedSlots[slotIndex] = player;
@@ -1032,7 +1096,11 @@
 				});
 				if (dragEl) dragEl.style.visibility = 'hidden';
 
+				// Null out picked player so the empty space is preserved on restore
+				currentPool = currentPool.map(p => p.id === player.id ? null : p);
+
 				updateScore();
+				saveProgress();
 			}
 
 			function calculateChemistry() {
@@ -1173,6 +1241,8 @@
 			let solutionSlots = {}; // optimal arrangement
 
 			function showResults() {
+				if (timerInterval) clearInterval(timerInterval);
+				clearProgress();
 				const userTalent = calcTalent(draftedSlots);
 				const userChemResult = calcChemForSlots(draftedSlots);
 				const userTotal = userTalent + userChemResult.totalChem;
@@ -1182,7 +1252,7 @@
 				const solChemResult = calcChemForSlots(solutionSlots);
 				const solTotal = solTalent + solChemResult.totalChem;
 
-				const durationSeconds = Math.round((Date.now() - draftStartTime) / 1000);
+				const durationSeconds = draftStartTime ? Math.round((Date.now() - draftStartTime) / 1000) : 0;
 
 				const picks = [];
 				for (const slotIndex in draftedSlots) {
@@ -1393,8 +1463,57 @@
 			}
 
 			// ── Init ──
-			document.addEventListener('DOMContentLoaded', () => {
+			document.addEventListener('DOMContentLoaded', async () => {
 				setupDropZones();
+
+				// Try to restore in-progress draft
+				try {
+					const resp = await fetch(`/api/vs/${battleId}/draft-progress/`);
+					const data = await resp.json();
+					if (data.exists) {
+						draftStartTime = data.start_time || null;
+						if (draftStartTime) {
+							timerInterval = setInterval(updateTimerDisplay, 1000);
+							updateTimerDisplay();
+						}
+						currentRound = data.current_round;
+						draftedPlayerIds = data.drafted_player_ids;
+						draftedSlots = data.drafted_slots;
+						currentPool = data.current_pool;
+						pickedThisRound = data.picked_this_round;
+
+						document.getElementById('round-indicator').textContent = 'Round ' + currentRound + ' of ' + totalRounds;
+						if (currentRound >= totalRounds) {
+							document.getElementById('next-round-btn').textContent = 'Finish';
+						}
+
+						// Restore filled slots on the board
+						for (const slotIndex in draftedSlots) {
+							const player = draftedSlots[slotIndex];
+							const slot = document.querySelector(`.hex-slot[data-slot="${slotIndex}"]`);
+							if (slot) {
+								slot.innerHTML = buildCardHTML(player, true);
+								slot.classList.add('filled');
+								makeSlotDraggable(slot);
+							}
+						}
+
+						// Restore pool cards
+						renderPool();
+						if (pickedThisRound) {
+							document.querySelectorAll('.pool-card').forEach(card => {
+								card.classList.add('disabled');
+							});
+						}
+
+						updateScore();
+						requestAnimationFrame(() => drawGridLines());
+						return;
+					}
+				} catch (e) {
+					// No saved progress, start fresh
+				}
+
 				fetchPlayers();
 				requestAnimationFrame(() => drawGridLines());
 			});

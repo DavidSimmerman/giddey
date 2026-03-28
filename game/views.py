@@ -11,7 +11,7 @@ from django.views.decorators.http import require_POST
 from django.db.models import Q
 from django.utils import timezone
 
-from .models import Draft, DraftPick, Friendship, Player, SoloDraftProgress, VsBattle, VsBattleRound
+from .models import Draft, DraftPick, Friendship, Player, SoloDraftProgress, VsBattle, VsBattleRound, VsDraftProgress
 
 # Tier odds per round: (platinum, gold, silver, bronze)
 # Hero % is merged into platinum since we don't have hero tier yet.
@@ -817,6 +817,56 @@ def api_vs_status(request, battle_id):
         "challenger_done": battle.challenger_draft is not None,
         "challenged_done": battle.challenged_draft is not None,
     })
+
+
+@login_required(login_url="login")
+def api_vs_draft_progress(request, battle_id):
+    battle = get_object_or_404(
+        VsBattle,
+        Q(challenger=request.user) | Q(challenged=request.user),
+        id=battle_id,
+        status="accepted",
+    )
+
+    if request.method == "GET":
+        try:
+            prog = VsDraftProgress.objects.get(battle=battle, user=request.user)
+        except VsDraftProgress.DoesNotExist:
+            return JsonResponse({"exists": False})
+        return JsonResponse({
+            "exists": True,
+            "current_round": prog.current_round,
+            "drafted_slots": prog.drafted_slots,
+            "drafted_player_ids": prog.drafted_player_ids,
+            "current_pool": prog.current_pool,
+            "picked_this_round": prog.picked_this_round,
+            "start_time": prog.start_time,
+        })
+
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+        VsDraftProgress.objects.update_or_create(
+            battle=battle,
+            user=request.user,
+            defaults={
+                "current_round": body["current_round"],
+                "drafted_slots": body["drafted_slots"],
+                "drafted_player_ids": body["drafted_player_ids"],
+                "current_pool": body["current_pool"],
+                "picked_this_round": body["picked_this_round"],
+                "start_time": body.get("start_time"),
+            },
+        )
+        return JsonResponse({"ok": True})
+
+    if request.method == "DELETE":
+        VsDraftProgress.objects.filter(battle=battle, user=request.user).delete()
+        return JsonResponse({"ok": True})
+
+    return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
 def _head_to_head(user, opponent):
