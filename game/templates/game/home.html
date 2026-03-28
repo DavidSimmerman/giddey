@@ -227,7 +227,57 @@ html, body {
 {% block content %}
 <div class="main">
     <div class="court">
-        {% include "game/_court_grid.html" %}
+        <svg class="grid-lines" id="grid-lines"></svg>
+        <!-- Row 1: SG, PF -->
+        <div class="row row-1">
+            <div class="hex-spacer"></div>
+            <div class="hex-slot-wrapper{% if dot_colors.0 and dot_colors.0 != 'white' %} dot-{{ dot_colors.0 }}{% endif %}">
+                <div class="hex-slot" data-slot="0" data-position="SG"><span class="empty-label">G</span></div>
+                <div class="slot-position-label">SG</div>
+            </div>
+            <div class="hex-slot-wrapper{% if dot_colors.1 and dot_colors.1 != 'white' %} dot-{{ dot_colors.1 }}{% endif %}">
+                <div class="hex-slot" data-slot="1" data-position="PF"><span class="empty-label">G</span></div>
+                <div class="slot-position-label">PF</div>
+            </div>
+            <div class="hex-spacer"></div>
+        </div>
+        <!-- Row 2: SF, PG, PG, SF -->
+        <div class="row row-2">
+            <div class="hex-slot-wrapper{% if dot_colors.2 and dot_colors.2 != 'white' %} dot-{{ dot_colors.2 }}{% endif %}">
+                <div class="hex-slot" data-slot="2" data-position="SF"><span class="empty-label">G</span></div>
+                <div class="slot-position-label">SF</div>
+            </div>
+            <div class="hex-slot-wrapper{% if dot_colors.3 and dot_colors.3 != 'white' %} dot-{{ dot_colors.3 }}{% endif %}">
+                <div class="hex-slot" data-slot="3" data-position="PG"><span class="empty-label">G</span></div>
+                <div class="slot-position-label">PG</div>
+            </div>
+            <div class="hex-slot-wrapper{% if dot_colors.4 and dot_colors.4 != 'white' %} dot-{{ dot_colors.4 }}{% endif %}">
+                <div class="hex-slot" data-slot="4" data-position="PG"><span class="empty-label">G</span></div>
+                <div class="slot-position-label">PG</div>
+            </div>
+            <div class="hex-slot-wrapper{% if dot_colors.5 and dot_colors.5 != 'white' %} dot-{{ dot_colors.5 }}{% endif %}">
+                <div class="hex-slot" data-slot="5" data-position="SF"><span class="empty-label">G</span></div>
+                <div class="slot-position-label">SF</div>
+            </div>
+        </div>
+        <!-- Row 3: PF, SG -->
+        <div class="row row-3">
+            <div class="hex-slot-wrapper{% if dot_colors.6 and dot_colors.6 != 'white' %} dot-{{ dot_colors.6 }}{% endif %}">
+                <div class="hex-slot" data-slot="6" data-position="PF"><span class="empty-label">G</span></div>
+                <div class="slot-position-label">PF</div>
+            </div>
+            <div class="hex-slot-wrapper{% if dot_colors.7 and dot_colors.7 != 'white' %} dot-{{ dot_colors.7 }}{% endif %}">
+                <div class="hex-slot" data-slot="7" data-position="SG"><span class="empty-label">G</span></div>
+                <div class="slot-position-label">SG</div>
+            </div>
+        </div>
+        <!-- Row 4: C -->
+        <div class="row row-4">
+            <div class="hex-slot-wrapper{% if dot_colors.8 and dot_colors.8 != 'white' %} dot-{{ dot_colors.8 }}{% endif %}">
+                <div class="hex-slot" data-slot="8" data-position="C"><span class="empty-label">G</span></div>
+                <div class="slot-position-label">C</div>
+            </div>
+        </div>
     </div>
     <div class="action-buttons">
         <a href="{% url 'draft' %}" class="action-card action-card--draft" id="draft-action">
@@ -356,6 +406,99 @@ function buildCardHTML(player) {
         </div>`;
 }
 
+function calculateChemistry(draftedSlots) {
+    const lineChems = [];
+
+    gridConnections.forEach(([a, b]) => {
+        const playerA = draftedSlots[a];
+        const playerB = draftedSlots[b];
+
+        if (!playerA || !playerB) {
+            lineChems.push({ a, b, chem: null });
+            return;
+        }
+
+        let chem = 0;
+        if (playerA.draft_year === playerB.draft_year) chem += 1;
+        if (playerA.team_division && playerB.team_division && playerA.team_division === playerB.team_division) chem += 1;
+        if (playerA.team_name === playerB.team_name) chem += 1;
+        if (playerA.college && playerB.college && playerA.college.trim() !== '' && playerB.college.trim() !== '' && playerA.college === playerB.college) chem += 2;
+
+        lineChems.push({ a, b, chem });
+    });
+
+    const dotBonuses = {};
+    for (const slotIndex in draftedSlots) {
+        const idx = parseInt(slotIndex);
+        let adjacentCount = 0;
+        let chemSum = 0;
+
+        lineChems.forEach(lc => {
+            if (lc.a !== idx && lc.b !== idx) return;
+            if (lc.chem === null) return;
+            adjacentCount++;
+            chemSum += lc.chem;
+        });
+
+        if (adjacentCount === 0) {
+            dotBonuses[idx] = { color: 'white', bonus: 0 };
+        } else if (chemSum < 2) {
+            dotBonuses[idx] = { color: 'red', bonus: 0 };
+        } else if (chemSum < 4) {
+            dotBonuses[idx] = { color: 'yellow', bonus: 6 };
+        } else if (chemSum < 6) {
+            dotBonuses[idx] = { color: 'green', bonus: 11 };
+        } else {
+            dotBonuses[idx] = { color: 'blue', bonus: 15 };
+        }
+    }
+
+    return { lineChems, dotBonuses };
+}
+
+function updateLineColors(lineChems) {
+    lineChems.forEach(({ a, b, chem }) => {
+        const line = document.querySelector(`line[data-connection="${a}-${b}"]`);
+        if (!line) return;
+
+        if (chem === null) {
+            line.setAttribute('stroke', 'rgba(255, 255, 255, 0.25)');
+            line.setAttribute('stroke-width', '2.5');
+        } else if (chem === 0) {
+            line.setAttribute('stroke', '#ef4444');
+            line.setAttribute('stroke-width', '3.5');
+        } else if (chem === 1) {
+            line.setAttribute('stroke', '#f59e0b');
+            line.setAttribute('stroke-width', '3.5');
+        } else if (chem === 2) {
+            line.setAttribute('stroke', '#4ade80');
+            line.setAttribute('stroke-width', '3.5');
+        } else {
+            line.setAttribute('stroke', '#3b82f6');
+            line.setAttribute('stroke-width', '3.5');
+        }
+    });
+}
+
+function updateDotColors(dotBonuses) {
+    document.querySelectorAll('.hex-slot-wrapper').forEach(wrapper => {
+        wrapper.classList.remove('dot-red', 'dot-yellow', 'dot-green', 'dot-blue');
+    });
+
+    for (const idx in dotBonuses) {
+        const slot = document.querySelector(`.hex-slot[data-slot="${idx}"]`);
+        if (!slot) continue;
+        const wrapper = slot.closest('.hex-slot-wrapper');
+        if (!wrapper) continue;
+        const color = dotBonuses[idx].color;
+        if (color !== 'white') {
+            wrapper.classList.add('dot-' + color);
+        }
+    }
+}
+
+let homeDraftedSlots = null;
+
 function restoreProgress() {
     const progress = {{ draft_progress_json|safe }};
     if (!progress) return;
@@ -375,8 +518,23 @@ function restoreProgress() {
     if (count > 0) {
         document.getElementById('draft-action-title').textContent = 'Resume Draft';
         document.getElementById('draft-action-sub').textContent = count + ' of 9 picks made';
+        homeDraftedSlots = slots;
     }
 }
+
+function applyChemistryColors() {
+    if (!homeDraftedSlots) return;
+    const { lineChems, dotBonuses } = calculateChemistry(homeDraftedSlots);
+    updateLineColors(lineChems);
+    updateDotColors(dotBonuses);
+}
+
+// Wrap drawGridLines so chemistry colors are applied in the same paint
+const _baseDrawGridLines = drawGridLines;
+drawGridLines = function() {
+    _baseDrawGridLines();
+    applyChemistryColors();
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     restoreProgress();

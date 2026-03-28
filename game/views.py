@@ -60,21 +60,80 @@ def _pending_count(user):
     )
 
 
+GRID_CONNECTIONS = [
+    (0, 1), (0, 2), (0, 3), (1, 4), (1, 5),
+    (2, 3), (2, 6), (3, 6), (3, 8), (4, 5),
+    (4, 7), (4, 8), (5, 7), (6, 8), (7, 8),
+]
+
+
+def _calc_dot_colors(drafted_slots):
+    """Compute per-slot dot color classes from drafted_slots JSON dict."""
+    # Chemistry per connection
+    line_chems = []
+    for a, b in GRID_CONNECTIONS:
+        pa = drafted_slots.get(str(a))
+        pb = drafted_slots.get(str(b))
+        if not pa or not pb:
+            line_chems.append((a, b, None))
+            continue
+        chem = 0
+        if pa.get("draft_year") == pb.get("draft_year"):
+            chem += 1
+        if pa.get("team_division") and pb.get("team_division") and pa["team_division"] == pb["team_division"]:
+            chem += 1
+        if pa.get("team_name") == pb.get("team_name"):
+            chem += 1
+        pa_col = (pa.get("college") or "").strip()
+        pb_col = (pb.get("college") or "").strip()
+        if pa_col and pb_col and pa_col == pb_col:
+            chem += 2
+        line_chems.append((a, b, chem))
+
+    dot_colors = {}
+    for slot_str in drafted_slots:
+        idx = int(slot_str)
+        adjacent_count = 0
+        chem_sum = 0
+        for a, b, chem in line_chems:
+            if a != idx and b != idx:
+                continue
+            if chem is None:
+                continue
+            adjacent_count += 1
+            chem_sum += chem
+        if adjacent_count == 0:
+            color = "white"
+        elif chem_sum < 2:
+            color = "red"
+        elif chem_sum < 4:
+            color = "yellow"
+        elif chem_sum < 6:
+            color = "green"
+        else:
+            color = "blue"
+        dot_colors[idx] = color
+    return dot_colors
+
+
 def home(request):
     if not request.user.is_authenticated and not request.session.get("guest"):
         return redirect("login")
     draft_progress = None
+    dot_colors = {}
     if request.user.is_authenticated:
         try:
             prog = SoloDraftProgress.objects.get(user=request.user)
             draft_progress = {
                 "drafted_slots": prog.drafted_slots,
             }
+            dot_colors = _calc_dot_colors(prog.drafted_slots)
         except SoloDraftProgress.DoesNotExist:
             pass
     return render(request, "game/home.html", {
         "pending_count": _pending_count(request.user),
         "draft_progress_json": json.dumps(draft_progress),
+        "dot_colors": dot_colors,
     })
 
 
