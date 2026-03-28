@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Giddey – Draft</title>
+		<title>Giddey – VS Draft</title>
 		<style>
 			* {
 				margin: 0;
@@ -604,311 +604,8 @@
 				display: flex;
 			}
 
-			/* Results top bar (dark, matches header) */
-			.results-top {
-				background: #1a1a1a;
-				padding: 0.75rem 1rem 0.75rem;
-			}
-
-			.results-header {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				margin-bottom: 0.75rem;
-			}
-
-			.results-header .back-btn {
-				display: flex;
-				align-items: center;
-				gap: 0.5rem;
-				background: none;
-				border: none;
-				color: #fff;
-				font-size: 1.1rem;
-				cursor: pointer;
-				padding: 0.25rem;
-			}
-
-			.results-header .back-btn .arrow {
-				font-size: 1.3rem;
-			}
-
-			.results-header .app-title {
-				font-size: 1.4rem;
-				font-weight: 900;
-				color: #e8883a;
-				letter-spacing: 0.15em;
-				text-transform: uppercase;
-			}
-
-			/* Tab bar */
-			.results-tabs {
-				display: flex;
-				border-radius: 10px;
-				overflow: hidden;
-				border: 2px solid #333;
-				background: #2a2a2a;
-			}
-
-			.results-tab {
-				flex: 1;
-				padding: 0.75rem 1rem;
-				text-align: center;
-				font-size: 0.95rem;
-				font-weight: 800;
-				text-transform: uppercase;
-				letter-spacing: 0.08em;
-				cursor: pointer;
-				border: none;
-				background: transparent;
-				color: #aaa;
-				transition: all 0.2s;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				gap: 0.5rem;
-			}
-
-			.results-tab.active {
-				background: #e8883a;
-				color: #000;
-				border-radius: 8px;
-			}
-
-			.results-tab .tab-icon {
-				font-size: 1rem;
-			}
-
-			/* Accuracy / Max Score bar */
-			.results-stats-bar {
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				padding: 0.5rem 1rem;
-				background: #1a1a1a;
-				border-top: 1px solid #333;
-			}
-
-			.results-stat {
-				flex: 1;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				gap: 0.5rem;
-			}
-
-			.results-stat .stat-label {
-				font-size: 0.8rem;
-				color: #aaa;
-			}
-
-			.results-stat .stat-value {
-				font-size: 1.4rem;
-				font-weight: 900;
-				color: #fff;
-			}
-
-			.results-stat .stat-icon {
-				font-size: 1.1rem;
-			}
-
-			.stat-icon.star { color: #e8883a; }
-			.stat-icon.trophy { color: #e8883a; }
-
-			/* Results grid (orange court area) */
-			.results-grid-container {
-				position: relative;
-				flex: 1;
-				min-height: 380px;
-				background: linear-gradient(180deg, #c45e20 0%, #a84e18 50%, #c45e20 100%);
-			}
-
-			.results-grid {
-				position: absolute;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				justify-content: space-evenly;
-				padding: 1rem 0.5rem;
-				gap: 0;
-			}
-
-			.results-grid.hidden {
-				display: none;
-			}
-
-			.results-grid svg.grid-lines {
-				position: absolute;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				pointer-events: none;
-				z-index: 0;
-			}
-
-			.results-grid .row {
-				display: flex;
-				justify-content: center;
-				gap: 0.75rem;
-				width: 100%;
-				max-width: 550px;
-				position: relative;
-				z-index: 1;
-			}
-
-			.results-grid .row-1 {
-				justify-content: space-between;
-				gap: 0;
-				padding: 0 0.25rem;
-				transform: translateY(30px);
-			}
-
-			.results-grid .row-2 {
-				justify-content: space-between;
-				gap: 0;
-				padding: 0 0.25rem;
-			}
-
-			.results-grid .row-2 .hex-slot-wrapper:nth-child(2),
-			.results-grid .row-2 .hex-slot-wrapper:nth-child(3) {
-				transform: translateY(60px);
-			}
-
-			.results-grid .row-3 {
-				justify-content: space-between;
-				gap: 0;
-				padding: 0 0.25rem;
-			}
-
-			.results-grid .row-4 {
-				justify-content: center;
-				gap: 0;
-				transform: translateY(-50px);
-			}
-
-			.results-grid .hex-slot {
-				width: 68px;
-				height: 95px;
-				clip-path: polygon(50% 0%, 100% 15%, 100% 85%, 50% 100%, 0% 85%, 0% 15%);
-				background: #7a3a10;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				position: relative;
-			}
-
-			.results-grid .slot-position-label {
-				position: absolute;
-				top: 85px;
-				font-size: 0.65rem;
-				font-weight: 700;
-				color: rgba(255, 255, 255, 0.5);
-				text-transform: uppercase;
-				letter-spacing: 0.05em;
-				white-space: nowrap;
-			}
-
-			/* Results position label placement mirrors court */
-			.results-grid .row-1 .hex-slot-wrapper:nth-child(2) .slot-position-label,
-			.results-grid .row-2 .hex-slot-wrapper:nth-child(1) .slot-position-label,
-			.results-grid .row-2 .hex-slot-wrapper:nth-child(2) .slot-position-label,
-			.results-grid .row-3 .hex-slot-wrapper:nth-child(1) .slot-position-label {
-				right: calc(50% + 18px);
-			}
-
-			.results-grid .row-1 .hex-slot-wrapper:nth-child(3) .slot-position-label,
-			.results-grid .row-2 .hex-slot-wrapper:nth-child(3) .slot-position-label,
-			.results-grid .row-2 .hex-slot-wrapper:nth-child(4) .slot-position-label,
-			.results-grid .row-3 .hex-slot-wrapper:nth-child(2) .slot-position-label {
-				left: calc(50% + 18px);
-			}
-
-			.results-grid .row-4 .slot-position-label {
-				top: 100px;
-			}
-
-			.results-grid .hex-slot-wrapper::after {
-				content: '';
-				position: absolute;
-				top: 90px;
-				left: 50%;
-				transform: translateX(-50%);
-				width: 28px;
-				height: 10px;
-				background: #fff;
-				border-radius: 50%;
-				z-index: -1;
-				transition: background 0.3s;
-			}
-
-			.results-grid .hex-slot-wrapper.dot-red::after { background: #ef4444; }
-			.results-grid .hex-slot-wrapper.dot-yellow::after { background: #f59e0b; }
-			.results-grid .hex-slot-wrapper.dot-green::after { background: #4ade80; }
-			.results-grid .hex-slot-wrapper.dot-blue::after { background: #3b82f6; }
-
-			/* Results bottom bar (dark, matches draft-area) */
-			.results-bottom {
-				background: #1a1a1a;
-				border-top: 3px solid #333;
-				padding: 1rem 1rem 1.5rem;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				gap: 0.75rem;
-			}
-
-			/* Score breakdown */
-			.results-scores {
-				display: flex;
-				justify-content: center;
-				gap: 0.75rem;
-				width: 100%;
-			}
-
-			.results-score-box {
-				flex: 1;
-				max-width: 160px;
-				background: #333;
-				border-radius: 8px;
-				padding: 0.75rem 0.5rem;
-				text-align: center;
-			}
-
-			.results-score-box .rsb-value {
-				font-size: 2rem;
-				font-weight: 900;
-				color: #fff;
-			}
-
-			.results-score-box .rsb-label {
-				font-size: 0.7rem;
-				color: #999;
-				text-transform: uppercase;
-				letter-spacing: 0.05em;
-			}
-
-			/* Next Draft button */
-			.next-draft-btn {
-				background: #e8883a;
-				color: #1a1a1a;
-				border: none;
-				padding: 0.75rem 2rem;
-				border-radius: 8px;
-				font-size: 1rem;
-				font-weight: 700;
-				cursor: pointer;
-				width: 100%;
-				text-transform: uppercase;
-				letter-spacing: 0.05em;
-			}
-
-			.next-draft-btn:hover {
-				background: #f09a4a;
+			@keyframes spin {
+				to { transform: rotate(360deg); }
 			}
 		</style>
 	</head>
@@ -928,6 +625,10 @@
 				<div class="score-box">
 					<div class="value" id="total-score">0</div>
 					<div class="label">Total</div>
+				</div>
+				<div class="score-box" style="background:#222;">
+					<div class="value" id="timer">0:00</div>
+					<div class="label">Time</div>
 				</div>
 			</div>
 		</div>
@@ -994,72 +695,26 @@
 			<button class="next-round-btn" id="next-round-btn" onclick="nextRound()">Next Round</button>
 		</div>
 
-		<!-- Draft Complete Screen -->
-		<div class="draft-complete" id="draft-complete">
-			<!-- Top bar (dark) -->
-			<div class="results-top">
-				<div class="results-header">
-					<span class="app-title">Giddey</span>
-				</div>
-				<!-- Tabs -->
-				<div class="results-tabs">
-					<button class="results-tab active" id="tab-myteam" onclick="switchResultsTab('myteam')">MY TEAM</button>
-					<button class="results-tab" id="tab-solution" onclick="switchResultsTab('solution')">
-						SOLUTION
-						<span class="tab-icon">&#9432;</span>
-					</button>
-				</div>
-			</div>
-
-			<!-- Accuracy / Max Score -->
-			<div class="results-stats-bar">
-				<div class="results-stat">
-					<span class="stat-label">Accuracy</span>
-					<span class="stat-value" id="results-accuracy">0%</span>
-					<span class="stat-icon star">&#9733;</span>
-				</div>
-				<div class="results-stat">
-					<span class="stat-label">Max Score</span>
-					<span class="stat-value" id="results-max-score">0</span>
-					<span class="stat-icon trophy">&#127942;</span>
-				</div>
-			</div>
-
-			<!-- Grid container (orange court, holds both grids) -->
-			<div class="results-grid-container">
-				<div class="results-grid" id="results-grid-myteam">
-					<svg class="grid-lines" id="results-lines-myteam"></svg>
-				</div>
-				<div class="results-grid hidden" id="results-grid-solution">
-					<svg class="grid-lines" id="results-lines-solution"></svg>
-				</div>
-			</div>
-
-			<!-- Bottom bar (dark) -->
-			<div class="results-bottom">
-				<div class="results-scores">
-					<div class="results-score-box">
-						<div class="rsb-value" id="results-talent">0</div>
-						<div class="rsb-label">Talent</div>
-					</div>
-					<div class="results-score-box">
-						<div class="rsb-value" id="results-chem">0</div>
-						<div class="rsb-label">Chem</div>
-					</div>
-					<div class="results-score-box">
-						<div class="rsb-value" id="results-total">0</div>
-						<div class="rsb-label">Total</div>
-					</div>
-				</div>
-				<button class="next-draft-btn" onclick="window.location.reload()">Next Draft</button>
-				{% if user.is_authenticated %}
-				<a href="{% url 'history' %}" class="next-draft-btn" style="text-decoration:none;text-align:center;background:#333;">My Drafts</a>
-				{% endif %}
+		<!-- VS Waiting Screen -->
+		<div class="draft-complete" id="vs-waiting">
+			<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;gap:1.5rem;padding:2rem;">
+				<div style="font-size:1.5rem;font-weight:900;color:#e8883a;text-transform:uppercase;letter-spacing:0.15em;">Draft Complete!</div>
+				<div style="font-size:1rem;color:#ccc;">Waiting for opponent...</div>
+				<div class="spinner" style="width:40px;height:40px;border:4px solid #333;border-top-color:#e8883a;border-radius:50%;animation:spin 1s linear infinite;"></div>
+				<a href="{% url 'friends' %}" style="color:#e8883a;text-decoration:none;font-size:0.9rem;margin-top:1rem;">Back to Friends</a>
 			</div>
 		</div>
 
 		<script>
 			const draftStartTime = Date.now();
+			const battleId = {{ battle.id }};
+			setInterval(() => {
+				const elapsed = Math.floor((Date.now() - draftStartTime) / 1000);
+				const mins = Math.floor(elapsed / 60);
+				const secs = elapsed % 60;
+				document.getElementById('timer').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+			}, 1000);
+
 			let currentRound = 1;
 			const totalRounds = 9;
 			let draftedPlayerIds = [];
@@ -1092,7 +747,7 @@
 				let html = '';
 				for (let i = 0; i < 5; i++) {
 					const filled = i < count;
-					html += `<span class="star">${filled ? '★' : '☆'}</span>`;
+					html += `<span class="star">${filled ? '\u2605' : '\u2606'}</span>`;
 				}
 				return html;
 			}
@@ -1138,7 +793,7 @@
 			async function fetchPlayers() {
 				const exclude = draftedPlayerIds.join(',');
 				const positions = getAvailablePositions().join(',');
-				const resp = await fetch(`/api/random-players/?exclude=${exclude}&round=${currentRound}&positions=${positions}`);
+				const resp = await fetch(`/api/vs/${battleId}/random-players/?exclude=${exclude}&round=${currentRound}&positions=${positions}`);
 				currentPool = await resp.json();
 				renderPool();
 			}
@@ -1518,40 +1173,17 @@
 			let solutionSlots = {}; // optimal arrangement
 
 			function showResults() {
-				// Calculate user's score
 				const userTalent = calcTalent(draftedSlots);
 				const userChemResult = calcChemForSlots(draftedSlots);
 				const userTotal = userTalent + userChemResult.totalChem;
 
-				// Find optimal solution
 				solutionSlots = findOptimalArrangement();
 				const solTalent = calcTalent(solutionSlots);
 				const solChemResult = calcChemForSlots(solutionSlots);
 				const solTotal = solTalent + solChemResult.totalChem;
 
-				// Accuracy
-				const accuracy = solTotal > 0 ? Math.round((userTotal / solTotal) * 100) : 100;
+				const durationSeconds = Math.round((Date.now() - draftStartTime) / 1000);
 
-				// Update stats
-				document.getElementById('results-accuracy').textContent = accuracy + '%';
-				document.getElementById('results-max-score').textContent = solTotal;
-
-				// Build both grids
-				buildResultsGrid('results-grid-myteam', draftedSlots);
-				buildResultsGrid('results-grid-solution', solutionSlots);
-
-				// Show overlay, default to "my team" tab
-				document.getElementById('draft-complete').classList.add('show');
-				switchResultsTab('myteam');
-
-				// Draw lines after DOM is visible
-				requestAnimationFrame(() => {
-					drawResultsLines('myteam', draftedSlots);
-					drawResultsLines('solution', solutionSlots);
-				});
-
-				// Save draft for authenticated users
-				{% if user.is_authenticated %}
 				const picks = [];
 				for (const slotIndex in draftedSlots) {
 					const p = draftedSlots[slotIndex];
@@ -1561,7 +1193,8 @@
 						slot_index: parseInt(slotIndex),
 					});
 				}
-				fetch('{% url "api_save_draft" %}', {
+
+				fetch(`/api/vs/${battleId}/save-draft/`, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -1572,11 +1205,35 @@
 						chemistry_score: userChemResult.totalChem,
 						total_score: userTotal,
 						optimal_score: solTotal,
-						duration_seconds: Math.round((Date.now() - draftStartTime) / 1000),
+						duration_seconds: durationSeconds,
 						picks: picks,
 					}),
+				})
+				.then(r => r.json())
+				.then(data => {
+					if (data.battle_complete) {
+						window.location.href = `/vs/${battleId}/results/`;
+					} else {
+						window.location.href = `/vs/${battleId}/draft/`;
+					}
 				});
-				{% endif %}
+			}
+
+			function showWaitingScreen() {
+				document.getElementById('vs-waiting').classList.add('show');
+				pollStatus();
+			}
+
+			function pollStatus() {
+				setInterval(() => {
+					fetch(`/api/vs/${battleId}/status/`)
+					.then(r => r.json())
+					.then(data => {
+						if (data.status === 'completed') {
+							window.location.href = `/vs/${battleId}/results/`;
+						}
+					});
+				}, 5000);
 			}
 
 			function calcTalent(slots) {
@@ -1677,153 +1334,6 @@
 					Object.assign(result, draftedSlots);
 				}
 				return result;
-			}
-
-			function buildResultsGrid(containerId, slots) {
-				const container = document.getElementById(containerId);
-				const svg = container.querySelector('svg');
-
-				// Clear everything except SVG
-				const existingRows = container.querySelectorAll('.row');
-				existingRows.forEach(r => r.remove());
-				const existingWrappers = container.querySelectorAll('.hex-slot-wrapper');
-				existingWrappers.forEach(w => w.remove());
-
-				const slotPositions = ['SG', 'PF', 'SF', 'PG', 'PG', 'SF', 'PF', 'SG', 'C'];
-				const rows = [
-					{ cls: 'row-1', slots: [null, 0, 1, null] }, // null = spacer
-					{ cls: 'row-2', slots: [2, 3, 4, 5] },
-					{ cls: 'row-3', slots: [6, 7] },
-					{ cls: 'row-4', slots: [8] }
-				];
-
-				const chemResult = calcChemForSlots(slots);
-
-				rows.forEach(rowDef => {
-					const row = document.createElement('div');
-					row.className = 'row ' + rowDef.cls;
-
-					rowDef.slots.forEach(slotIdx => {
-						if (slotIdx === null) {
-							const spacer = document.createElement('div');
-							spacer.className = 'hex-spacer';
-							spacer.style.width = '68px';
-							spacer.style.visibility = 'hidden';
-							row.appendChild(spacer);
-							return;
-						}
-
-						const wrapper = document.createElement('div');
-						wrapper.className = 'hex-slot-wrapper';
-
-						// Apply dot color
-						if (chemResult.dotBonuses[slotIdx]) {
-							const color = chemResult.dotBonuses[slotIdx].color;
-							if (color !== 'white') wrapper.classList.add('dot-' + color);
-						}
-
-						const hex = document.createElement('div');
-						hex.className = 'hex-slot';
-						hex.dataset.slot = slotIdx;
-						hex.dataset.position = slotPositions[slotIdx];
-
-						if (slots[slotIdx]) {
-							hex.classList.add('filled');
-							hex.innerHTML = buildCardHTML(slots[slotIdx], true);
-						}
-
-						wrapper.appendChild(hex);
-
-						const label = document.createElement('div');
-						label.className = 'slot-position-label';
-						label.textContent = slotPositions[slotIdx] + ' [' + (slotIdx + 1) + ']';
-						wrapper.appendChild(label);
-
-						row.appendChild(wrapper);
-					});
-
-					container.appendChild(row);
-				});
-			}
-
-			function drawResultsLines(tab, slots) {
-				const container = document.getElementById('results-grid-' + tab);
-				const svg = document.getElementById('results-lines-' + tab);
-				const containerRect = container.getBoundingClientRect();
-
-				svg.setAttribute('viewBox', `0 0 ${containerRect.width} ${containerRect.height}`);
-				svg.innerHTML = '';
-
-				const hexSlots = container.querySelectorAll('.hex-slot');
-				const centers = {};
-				hexSlots.forEach(slot => {
-					const rect = slot.getBoundingClientRect();
-					centers[slot.dataset.slot] = {
-						x: rect.left + rect.width / 2 - containerRect.left,
-						y: rect.top + rect.height - containerRect.top
-					};
-				});
-
-				const chemResult = calcChemForSlots(slots);
-
-				gridConnections.forEach(([a, b]) => {
-					if (!centers[a] || !centers[b]) return;
-					const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-					line.setAttribute('x1', centers[a].x);
-					line.setAttribute('y1', centers[a].y);
-					line.setAttribute('x2', centers[b].x);
-					line.setAttribute('y2', centers[b].y);
-					line.setAttribute('stroke-width', '3');
-
-					const lc = chemResult.lineChems.find(l => l.a === a && l.b === b);
-					const chem = lc ? lc.chem : null;
-					if (chem === null) line.setAttribute('stroke', 'rgba(255,255,255,0.25)');
-					else if (chem === 0) line.setAttribute('stroke', '#ef4444');
-					else if (chem === 1) line.setAttribute('stroke', '#f59e0b');
-					else if (chem === 2) line.setAttribute('stroke', '#4ade80');
-					else line.setAttribute('stroke', '#3b82f6');
-
-					svg.appendChild(line);
-				});
-			}
-
-			function switchResultsTab(tab) {
-				const myteamTab = document.getElementById('tab-myteam');
-				const solutionTab = document.getElementById('tab-solution');
-				const myteamGrid = document.getElementById('results-grid-myteam');
-				const solutionGrid = document.getElementById('results-grid-solution');
-
-				if (tab === 'myteam') {
-					myteamTab.classList.add('active');
-					solutionTab.classList.remove('active');
-					myteamGrid.classList.remove('hidden');
-					solutionGrid.classList.add('hidden');
-
-					// Update scores to user's scores
-					const talent = calcTalent(draftedSlots);
-					const chemResult = calcChemForSlots(draftedSlots);
-					const total = talent + chemResult.totalChem;
-					document.getElementById('results-talent').textContent = talent;
-					document.getElementById('results-chem').textContent = chemResult.totalChem;
-					document.getElementById('results-total').textContent = total;
-
-					requestAnimationFrame(() => drawResultsLines('myteam', draftedSlots));
-				} else {
-					solutionTab.classList.add('active');
-					myteamTab.classList.remove('active');
-					solutionGrid.classList.remove('hidden');
-					myteamGrid.classList.add('hidden');
-
-					// Update scores to solution's scores
-					const talent = calcTalent(solutionSlots);
-					const chemResult = calcChemForSlots(solutionSlots);
-					const total = talent + chemResult.totalChem;
-					document.getElementById('results-talent').textContent = talent;
-					document.getElementById('results-chem').textContent = chemResult.totalChem;
-					document.getElementById('results-total').textContent = total;
-
-					requestAnimationFrame(() => drawResultsLines('solution', solutionSlots));
-				}
 			}
 
 			// ── Grid lines ──

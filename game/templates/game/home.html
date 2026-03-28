@@ -112,6 +112,7 @@
         <div class="auth-links">
             {% if user.is_authenticated %}
                 <span class="username">{{ user.username }}</span>
+                <a href="{% url 'friends' %}">Friends{% if pending_count %} ({{ pending_count }}){% endif %}</a>
                 <a href="{% url 'history' %}">My Drafts</a>
                 <a href="{% url 'logout' %}">Log Out</a>
             {% else %}
@@ -122,6 +123,7 @@
     <div class="main">
         <a href="{% url 'draft' %}" class="start-btn">Start Draft</a>
         {% if user.is_authenticated %}
+        <a href="{% url 'friends' %}" class="secondary-btn">Friends{% if pending_count %} ({{ pending_count }}){% endif %}</a>
         <a href="{% url 'history' %}" class="secondary-btn">My Drafts</a>
         {% endif %}
     </div>

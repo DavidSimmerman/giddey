@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giddey – Waiting</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+        }
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #e8883a;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+        .center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+        .title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #e8883a;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+        .subtitle {
+            font-size: 1rem;
+            color: #ccc;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #333;
+            border-top-color: #e8883a;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .back-link {
+            color: #e8883a;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'home' %}" class="header-title">Giddey</a>
+    </div>
+    <div class="center">
+        <div class="title">Draft Complete!</div>
+        <div class="subtitle">Waiting for opponent...</div>
+        <div class="spinner"></div>
+        <a href="{% url 'friends' %}" class="back-link">Back to Friends</a>
+    </div>
+    <script>
+        setInterval(() => {
+            fetch('/api/vs/{{ battle.id }}/status/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'completed') {
+                    window.location.href = '/vs/{{ battle.id }}/results/';
+                }
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

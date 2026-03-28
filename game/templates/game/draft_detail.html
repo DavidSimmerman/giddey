@@ -11,30 +11,45 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: #c45e20;
             color: #e0e0e0;
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
-        .header {
+        /* ── Results top bar ── */
+        .results-top {
+            background: #1a1a1a;
+            padding: 0.75rem 1rem 0.75rem;
+        }
+
+        .results-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 1.5rem;
-            background: #1a1a1a;
+            margin-bottom: 0.75rem;
         }
 
-        .header a {
-            color: #aaa;
+        .results-header .back-btn,
+        .results-header .back-btn:visited {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0.25rem;
             text-decoration: none;
-            font-size: 0.85rem;
-            transition: color 0.2s;
         }
 
-        .header a:hover { color: #e8883a; }
+        .results-header .back-btn .arrow {
+            font-size: 1.3rem;
+        }
 
-        .header-title {
-            font-size: 1.5rem;
+        .results-header .app-title {
+            font-size: 1.4rem;
             font-weight: 900;
             color: #e8883a;
             letter-spacing: 0.15em;
@@ -42,161 +57,959 @@
             text-decoration: none;
         }
 
-        .content {
-            max-width: 600px;
-            width: 100%;
-            margin: 1.5rem auto;
-            padding: 0 1.5rem;
-        }
-
-        .date {
-            color: #1a1a1a;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .scores {
+        /* Tab bar */
+        .results-tabs {
             display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #333;
+            background: #2a2a2a;
         }
 
-        .score-box {
+        .results-tab {
             flex: 1;
-            min-width: 60px;
-            background: #1a1a1a;
-            border-radius: 8px;
-            padding: 0.6rem 0.5rem;
+            padding: 0.75rem 1rem;
             text-align: center;
+            font-size: 0.95rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: #aaa;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
-        .score-box .value {
-            font-size: 1.2rem;
-            font-weight: 700;
+        .results-tab.active {
+            background: #e8883a;
+            color: #000;
+            border-radius: 8px;
+        }
+
+        .results-tab .tab-icon {
+            font-size: 1rem;
+        }
+
+        /* Accuracy / Max Score bar */
+        .results-stats-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: #1a1a1a;
+            border-top: 1px solid #333;
+        }
+
+        .results-stat {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .results-stat .stat-label {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        .results-stat .stat-value {
+            font-size: 1.4rem;
+            font-weight: 900;
             color: #fff;
         }
 
-        .score-box .label {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            color: #999;
-            letter-spacing: 0.05em;
+        .results-stat .stat-icon {
+            font-size: 1.1rem;
         }
 
-        .score-box.accent .value {
-            color: #e8883a;
-        }
+        .stat-icon.star { color: #e8883a; }
+        .stat-icon.trophy { color: #e8883a; }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #1a1a1a;
-            border-radius: 8px;
+        /* Results grid (orange court area) */
+        .results-grid-container {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            background: linear-gradient(180deg, #c45e20 0%, #a84e18 50%, #c45e20 100%);
             overflow: hidden;
         }
 
-        th {
-            text-align: left;
-            font-size: 0.7rem;
+        .results-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-evenly;
+            padding: 1rem 0.5rem;
+            gap: 0;
+        }
+
+        .results-grid.hidden {
+            display: none;
+        }
+
+        .results-grid svg.grid-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .results-grid .row {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            max-width: 550px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .results-grid .row-1 {
+            justify-content: space-between;
+            gap: 0;
+            padding: 0 1.25rem;
+            transform: translateY(30px);
+        }
+
+        .results-grid .row-2 {
+            justify-content: space-between;
+            gap: 0;
+            padding: 0 1.25rem;
+        }
+
+        .results-grid .row-2 .hex-slot-wrapper:nth-child(2),
+        .results-grid .row-2 .hex-slot-wrapper:nth-child(3) {
+            transform: translateY(60px);
+        }
+
+        .results-grid .row-3 {
+            justify-content: space-between;
+            gap: 0;
+            padding: 0 1.25rem;
+        }
+
+        .results-grid .row-4 {
+            justify-content: center;
+            gap: 0;
+            transform: translateY(-50px);
+        }
+
+        /* ── Hex Slot ── */
+        .hex-slot-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            position: relative;
+        }
+
+        .hex-slot {
+            width: 68px;
+            height: 95px;
+            clip-path: polygon(50% 0%, 100% 15%, 100% 85%, 50% 100%, 0% 85%, 0% 15%);
+            background: #7a3a10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .results-grid .slot-position-label {
+            position: absolute;
+            top: 85px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            color: #888;
-            padding: 0.6rem 0.75rem;
-            border-bottom: 1px solid #333;
+            white-space: nowrap;
         }
 
-        td {
-            padding: 0.6rem 0.75rem;
-            border-bottom: 1px solid #2a2a2a;
-            font-size: 0.85rem;
+        /* Position label placement */
+        .results-grid .row-1 .hex-slot-wrapper:nth-child(2) .slot-position-label,
+        .results-grid .row-2 .hex-slot-wrapper:nth-child(1) .slot-position-label,
+        .results-grid .row-2 .hex-slot-wrapper:nth-child(2) .slot-position-label,
+        .results-grid .row-3 .hex-slot-wrapper:nth-child(1) .slot-position-label {
+            right: calc(50% + 18px);
         }
 
-        tr:last-child td {
-            border-bottom: none;
+        .results-grid .row-1 .hex-slot-wrapper:nth-child(3) .slot-position-label,
+        .results-grid .row-2 .hex-slot-wrapper:nth-child(3) .slot-position-label,
+        .results-grid .row-2 .hex-slot-wrapper:nth-child(4) .slot-position-label,
+        .results-grid .row-3 .hex-slot-wrapper:nth-child(2) .slot-position-label {
+            left: calc(50% + 18px);
         }
 
-        .player-name {
+        .results-grid .row-4 .slot-position-label {
+            top: 100px;
+        }
+
+        .results-grid .hex-slot-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 10px;
+            background: #fff;
+            border-radius: 50%;
+            z-index: -1;
+            transition: background 0.3s;
+        }
+
+        .results-grid .hex-slot-wrapper.dot-red::after { background: #ef4444; }
+        .results-grid .hex-slot-wrapper.dot-yellow::after { background: #f59e0b; }
+        .results-grid .hex-slot-wrapper.dot-green::after { background: #4ade80; }
+        .results-grid .hex-slot-wrapper.dot-blue::after { background: #3b82f6; }
+
+        /* ── Tier color definitions ── */
+        .tier-platinum {
+            --border-light: #e0c0ff;
+            --border-dark: #7c3aed;
+            --upper-bg: #5b21b6;
+            --lower-bg: #1e0a3e;
+            --divider-color: #9056d0;
+            --badge-bg: #9333ea;
+        }
+        .tier-gold {
+            --border-light: #ffe066;
+            --border-dark: #a07010;
+            --upper-bg: #8a6010;
+            --lower-bg: #352408;
+            --divider-color: #b8920b;
+            --badge-bg: #c49000;
+        }
+        .tier-silver {
+            --border-light: #d8d8d8;
+            --border-dark: #707070;
+            --upper-bg: #585858;
+            --lower-bg: #222222;
+            --divider-color: #808080;
+            --badge-bg: #808890;
+        }
+        .tier-bronze {
+            --border-light: #e0a060;
+            --border-dark: #6b3a12;
+            --upper-bg: #6b3a12;
+            --lower-bg: #241008;
+            --divider-color: #8b5a2a;
+            --badge-bg: #a06028;
+        }
+
+        /* ── Card structure ── */
+        .card-inner {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            clip-path: polygon(50% 0%, 100% 15%, 100% 85%, 50% 100%, 0% 85%, 0% 15%);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.7));
+        }
+
+        .card-upper {
+            flex: 50;
+            background: var(--upper-bg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-upper .team-logo-bg {
+            position: absolute;
+            left: 5%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 42%;
+            height: 55%;
+            object-fit: contain;
+            opacity: 1;
+            pointer-events: none;
+        }
+
+        .card-upper .player-photo {
+            position: absolute;
+            right: 2%;
+            bottom: 0;
+            width: 58%;
+            height: 88%;
+            object-fit: cover;
+            object-position: top center;
+            z-index: 1;
+            filter: drop-shadow(-3px 2px 6px rgba(0, 0, 0, 0.6));
+            pointer-events: none;
+        }
+
+        .card-badge-row {
+            height: 1px;
+            background: var(--divider-color);
+            position: relative;
+            z-index: 3;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+        }
+
+        .card-badge-row .position-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.5rem;
+            font-weight: 800;
             color: #fff;
-            font-weight: 600;
+            background: var(--badge-bg);
+            padding: 3px 12px;
+            clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            z-index: 4;
         }
 
-        .player-team {
-            color: #888;
+        .card-lower {
+            flex: 50;
+            background: var(--lower-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 1px 1px;
+            gap: 0;
+        }
+
+        .card-lower .player-name {
+            font-size: 0.6rem;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            text-align: center;
+            line-height: 1.15;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .card-lower .player-division {
+            font-size: 0.45rem;
+            color: rgba(255, 255, 255, 0.75);
+            text-transform: uppercase;
+            margin-top: 1px;
+        }
+
+        .card-lower .player-year {
             font-size: 0.75rem;
+            font-weight: 900;
+            color: #fff;
+            margin-top: 1px;
+            position: relative;
+            z-index: 1;
         }
 
-        .rating {
+        .card-lower .stars {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 1px;
+            margin-top: -2px;
+        }
+
+        .card-lower .stars .star {
+            font-size: 0.5rem;
+            color: #facc15;
+            line-height: 1;
+            display: block;
+        }
+
+        .card-lower .stars .star:nth-child(1) { margin-bottom: 4px; }
+        .card-lower .stars .star:nth-child(2) { margin-bottom: 2px; }
+        .card-lower .stars .star:nth-child(3) { margin-bottom: 0; }
+        .card-lower .stars .star:nth-child(4) { margin-bottom: 2px; }
+        .card-lower .stars .star:nth-child(5) { margin-bottom: 4px; }
+
+        /* ── Slot card sizing ── */
+        .card-in-slot {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: linear-gradient(135deg, var(--border-light) 0%, var(--border-dark) 50%, var(--border-light) 100%);
+            user-select: none;
+        }
+
+        .card-in-slot .card-inner {
+            top: 3px;
+            left: 3px;
+            right: 3px;
+            bottom: 3px;
+        }
+
+        .card-in-slot .card-badge-row .position-badge {
+            font-size: 0.42rem;
+            padding: 1px 5px;
+        }
+
+        .card-in-slot .card-lower {
+            padding: 5px 3px 1px;
+        }
+
+        .card-in-slot .card-lower .player-name {
+            font-size: 0.5rem;
+        }
+
+        .card-in-slot .card-lower .player-division {
+            font-size: 0.35rem;
+        }
+
+        .card-in-slot .card-lower .player-year {
+            font-size: 0.55rem;
+        }
+
+        .card-in-slot .card-lower .stars .star {
+            font-size: 0.38rem;
+        }
+
+        .card-in-slot .card-lower .stars .star:nth-child(1) { margin-bottom: 7px; }
+        .card-in-slot .card-lower .stars .star:nth-child(2) { margin-bottom: 3px; }
+        .card-in-slot .card-lower .stars .star:nth-child(3) { margin-bottom: 0; }
+        .card-in-slot .card-lower .stars .star:nth-child(4) { margin-bottom: 3px; }
+        .card-in-slot .card-lower .stars .star:nth-child(5) { margin-bottom: 7px; }
+
+        /* ── Results bottom bar ── */
+        .results-bottom {
+            background: #1a1a1a;
+            border-top: 3px solid #333;
+            padding: 1rem 1rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .results-scores {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+        }
+
+        .results-score-box {
+            flex: 1;
+            max-width: 160px;
+            background: #333;
+            border-radius: 8px;
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+        }
+
+        .results-score-box .rsb-value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        .results-score-box .rsb-label {
+            font-size: 0.7rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .back-btn-bottom {
+            background: #e8883a;
+            color: #1a1a1a;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
             font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-decoration: none;
+            text-align: center;
+            display: block;
         }
 
-        .rating.platinum { color: #00cfff; }
-        .rating.gold { color: #ffd700; }
-        .rating.silver { color: #c0c0c0; }
-        .rating.bronze { color: #cd7f32; }
+        .back-btn-bottom:hover {
+            background: #f09a4a;
+        }
+
+        .waiting-banner {
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+            padding: 0.6rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .waiting-banner .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #333;
+            border-top-color: #e8883a;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="header">
-        <a href="{% url 'history' %}">&larr; My Drafts</a>
-        <a href="{% url 'home' %}" class="header-title">Giddey</a>
-        <span></span>
+    <!-- Top bar -->
+    <div class="results-top">
+        <div class="results-header">
+            <a href="javascript:history.back()" class="back-btn">
+                <span class="arrow">&#8592;</span> Back
+            </a>
+            <a href="{% url 'home' %}" class="app-title">Giddey</a>
+            <span style="width:70px"></span>
+        </div>
+        <!-- Tabs -->
+        <div class="results-tabs">
+            <button class="results-tab active" id="tab-myteam" onclick="switchResultsTab('myteam')">MY TEAM</button>
+            <button class="results-tab" id="tab-solution" onclick="switchResultsTab('solution')">
+                SOLUTION
+                <span class="tab-icon">&#9432;</span>
+            </button>
+        </div>
     </div>
 
-    <div class="content">
-        <div class="date">{{ draft.completed_at|date:"M j, Y – g:i A" }}</div>
+    <!-- Accuracy / Max Score -->
+    <div class="results-stats-bar">
+        <div class="results-stat">
+            <span class="stat-label">Accuracy</span>
+            <span class="stat-value" id="results-accuracy">0%</span>
+            <span class="stat-icon star">&#9733;</span>
+        </div>
+        <div class="results-stat">
+            <span class="stat-label">Max Score</span>
+            <span class="stat-value" id="results-max-score">0</span>
+            <span class="stat-icon trophy">&#127942;</span>
+        </div>
+    </div>
 
-        <div class="scores">
-            <div class="score-box">
-                <div class="value">{{ draft.talent_score }}</div>
-                <div class="label">Talent</div>
+    {% if waiting_battle_id %}
+    <div class="waiting-banner">
+        <div class="spinner"></div>
+        <span>Waiting for opponent...</span>
+    </div>
+    {% endif %}
+
+    <!-- Grid container -->
+    <div class="results-grid-container">
+        <div class="results-grid" id="results-grid-myteam">
+            <svg class="grid-lines" id="results-lines-myteam"></svg>
+        </div>
+        <div class="results-grid hidden" id="results-grid-solution">
+            <svg class="grid-lines" id="results-lines-solution"></svg>
+        </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="results-bottom">
+        <div class="results-scores">
+            <div class="results-score-box">
+                <div class="rsb-value" id="results-talent">0</div>
+                <div class="rsb-label">Talent</div>
             </div>
-            <div class="score-box">
-                <div class="value">{{ draft.chemistry_score }}</div>
-                <div class="label">Chem</div>
+            <div class="results-score-box">
+                <div class="rsb-value" id="results-chem">0</div>
+                <div class="rsb-label">Chem</div>
             </div>
-            <div class="score-box accent">
-                <div class="value">{{ draft.total_score }}</div>
-                <div class="label">Total</div>
-            </div>
-            <div class="score-box">
-                <div class="value">{{ draft.optimal_score }}</div>
-                <div class="label">Optimal</div>
-            </div>
-            <div class="score-box accent">
-                <div class="value">{{ accuracy }}%</div>
-                <div class="label">Accuracy</div>
+            <div class="results-score-box">
+                <div class="rsb-value" id="results-total">0</div>
+                <div class="rsb-label">Total</div>
             </div>
         </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Rd</th>
-                    <th>Pos</th>
-                    <th>Player</th>
-                    <th>OVR</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for pick in picks %}
-                <tr>
-                    <td>{{ pick.round_number }}</td>
-                    <td>{{ pick.slot_position }}</td>
-                    <td>
-                        <span class="player-name">{{ pick.player.first_name }} {{ pick.player.last_name }}</span>
-                        <br><span class="player-team">{{ pick.player.team }}</span>
-                    </td>
-                    <td>
-                        <span class="rating {% if pick.player.rating >= 88 %}platinum{% elif pick.player.rating >= 82 %}gold{% elif pick.player.rating >= 76 %}silver{% else %}bronze{% endif %}">
-                            {{ pick.player.rating }}
-                        </span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        {% if waiting_battle_id %}
+        <a href="{% url 'friends' %}" class="back-btn-bottom">Back to Friends</a>
+        {% else %}
+        <a href="javascript:history.back()" class="back-btn-bottom">Back</a>
+        {% endif %}
     </div>
+
+    <script>
+        const picksData = {{ picks_json|safe }};
+
+        // Build draftedSlots from server data
+        const draftedSlots = {};
+        picksData.forEach(p => {
+            draftedSlots[p.slot_index] = p;
+        });
+
+        // ── Helpers ──
+        function getTier(rating) {
+            if (rating >= 88) return 'platinum';
+            if (rating >= 82) return 'gold';
+            if (rating >= 76) return 'silver';
+            return 'bronze';
+        }
+
+        function getTalentBonus(rating) {
+            if (rating >= 88) return 11;
+            if (rating >= 82) return 8;
+            if (rating >= 76) return 5;
+            return 3;
+        }
+
+        function getStars(rating) {
+            if (rating >= 88) return 4;
+            if (rating >= 82) return 3;
+            if (rating >= 76) return 2;
+            return 1;
+        }
+
+        function starString(count) {
+            let html = '';
+            for (let i = 0; i < 5; i++) {
+                html += `<span class="star">${i < count ? '\u2605' : '\u2606'}</span>`;
+            }
+            return html;
+        }
+
+        function buildCardHTML(player, isSlot) {
+            const tier = getTier(player.rating);
+            const tierClass = 'tier-' + tier;
+            const initial = player.first_name.charAt(0).toUpperCase();
+            const lastName = player.last_name.toUpperCase();
+            const stars = getStars(player.rating);
+
+            return `
+                <div class="${isSlot ? 'card-in-slot' : ''} ${tierClass}">
+                    <div class="card-inner">
+                        <div class="card-upper">
+                            <img class="team-logo-bg" src="${player.team_logo}" alt="" onerror="this.style.display='none'">
+                            <img class="player-photo" src="${player.image}" alt="" onerror="this.style.display='none'">
+                        </div>
+                        <div class="card-badge-row">
+                            <div class="position-badge">${player.position}</div>
+                        </div>
+                        <div class="card-lower">
+                            <div class="player-name">${initial}. ${lastName}</div>
+                            <div class="player-division">${player.team_division}</div>
+                            <div class="player-year">${player.draft_year}</div>
+                            <div class="stars">${starString(stars)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ── Grid connections ──
+        const gridConnections = [
+            [0, 1], [0, 2], [0, 3], [1, 4], [1, 5],
+            [2, 3], [2, 6], [3, 6], [3, 8], [4, 5],
+            [4, 7], [4, 8], [5, 7], [6, 8], [7, 8]
+        ];
+
+        // ── Scoring ──
+        function calcTalent(slots) {
+            let t = 0;
+            for (const key in slots) t += getTalentBonus(slots[key].rating);
+            return t;
+        }
+
+        function calcChemForSlots(slots) {
+            const lineChems = [];
+            gridConnections.forEach(([a, b]) => {
+                const playerA = slots[a];
+                const playerB = slots[b];
+                if (!playerA || !playerB) {
+                    lineChems.push({ a, b, chem: null });
+                    return;
+                }
+                let chem = 0;
+                if (playerA.draft_year === playerB.draft_year) chem += 1;
+                if (playerA.team_division && playerB.team_division && playerA.team_division === playerB.team_division) chem += 1;
+                if (playerA.team_name === playerB.team_name) chem += 1;
+                if (playerA.college && playerB.college && playerA.college.trim() !== '' && playerB.college.trim() !== '' && playerA.college === playerB.college) chem += 2;
+                lineChems.push({ a, b, chem });
+            });
+
+            const dotBonuses = {};
+            for (const slotIndex in slots) {
+                const idx = parseInt(slotIndex);
+                let chemSum = 0;
+                let adjacentCount = 0;
+                lineChems.forEach(lc => {
+                    if (lc.a !== idx && lc.b !== idx) return;
+                    if (lc.chem === null) return;
+                    adjacentCount++;
+                    chemSum += lc.chem;
+                });
+                if (adjacentCount === 0) dotBonuses[idx] = { color: 'white', bonus: 0 };
+                else if (chemSum < 2) dotBonuses[idx] = { color: 'red', bonus: 0 };
+                else if (chemSum < 4) dotBonuses[idx] = { color: 'yellow', bonus: 6 };
+                else if (chemSum < 6) dotBonuses[idx] = { color: 'green', bonus: 11 };
+                else dotBonuses[idx] = { color: 'blue', bonus: 15 };
+            }
+
+            let totalChem = 0;
+            lineChems.forEach(lc => { if (lc.chem !== null) totalChem += lc.chem; });
+            for (const idx in dotBonuses) totalChem += dotBonuses[idx].bonus;
+
+            return { totalChem, lineChems, dotBonuses };
+        }
+
+        function scoreArrangement(slots) {
+            return calcTalent(slots) + calcChemForSlots(slots).totalChem;
+        }
+
+        // Brute-force optimal arrangement (9! = 362880)
+        function findOptimalArrangement() {
+            const players = [];
+            for (const key in draftedSlots) players.push(draftedSlots[key]);
+
+            const slotPositions = ['SG', 'PF', 'SF', 'PG', 'PG', 'SF', 'PF', 'SG', 'C'];
+            let bestScore = -1;
+            let bestPerm = null;
+
+            function permute(arr, start) {
+                if (start === arr.length) {
+                    const testSlots = {};
+                    for (let i = 0; i < arr.length; i++) {
+                        const pPositions = arr[i].position.split('/').map(p => p.trim());
+                        if (!pPositions.includes(slotPositions[i])) return;
+                        testSlots[i] = arr[i];
+                    }
+                    const score = scoreArrangement(testSlots);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestPerm = [...arr];
+                    }
+                    return;
+                }
+                for (let i = start; i < arr.length; i++) {
+                    [arr[start], arr[i]] = [arr[i], arr[start]];
+                    permute(arr, start + 1);
+                    [arr[start], arr[i]] = [arr[i], arr[start]];
+                }
+            }
+
+            permute(players, 0);
+
+            const result = {};
+            if (bestPerm) {
+                bestPerm.forEach((p, i) => { result[i] = p; });
+            } else {
+                Object.assign(result, draftedSlots);
+            }
+            return result;
+        }
+
+        // ── Grid building ──
+        function buildResultsGrid(containerId, slots) {
+            const container = document.getElementById(containerId);
+            const existingRows = container.querySelectorAll('.row');
+            existingRows.forEach(r => r.remove());
+
+            const slotPositions = ['SG', 'PF', 'SF', 'PG', 'PG', 'SF', 'PF', 'SG', 'C'];
+            const rows = [
+                { cls: 'row-1', slots: [null, 0, 1, null] },
+                { cls: 'row-2', slots: [2, 3, 4, 5] },
+                { cls: 'row-3', slots: [6, 7] },
+                { cls: 'row-4', slots: [8] }
+            ];
+
+            const chemResult = calcChemForSlots(slots);
+
+            rows.forEach(rowDef => {
+                const row = document.createElement('div');
+                row.className = 'row ' + rowDef.cls;
+
+                rowDef.slots.forEach(slotIdx => {
+                    if (slotIdx === null) {
+                        const spacer = document.createElement('div');
+                        spacer.className = 'hex-spacer';
+                        spacer.style.width = '68px';
+                        spacer.style.visibility = 'hidden';
+                        row.appendChild(spacer);
+                        return;
+                    }
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'hex-slot-wrapper';
+
+                    if (chemResult.dotBonuses[slotIdx]) {
+                        const color = chemResult.dotBonuses[slotIdx].color;
+                        if (color !== 'white') wrapper.classList.add('dot-' + color);
+                    }
+
+                    const hex = document.createElement('div');
+                    hex.className = 'hex-slot';
+                    hex.dataset.slot = slotIdx;
+                    hex.dataset.position = slotPositions[slotIdx];
+
+                    if (slots[slotIdx]) {
+                        hex.classList.add('filled');
+                        hex.innerHTML = buildCardHTML(slots[slotIdx], true);
+                    }
+
+                    wrapper.appendChild(hex);
+
+                    const label = document.createElement('div');
+                    label.className = 'slot-position-label';
+                    label.textContent = slotPositions[slotIdx] + ' [' + (slotIdx + 1) + ']';
+                    wrapper.appendChild(label);
+
+                    row.appendChild(wrapper);
+                });
+
+                container.appendChild(row);
+            });
+        }
+
+        function drawResultsLines(tab, slots) {
+            const container = document.getElementById('results-grid-' + tab);
+            const svg = document.getElementById('results-lines-' + tab);
+            const containerRect = container.getBoundingClientRect();
+
+            svg.setAttribute('viewBox', `0 0 ${containerRect.width} ${containerRect.height}`);
+            svg.innerHTML = '';
+
+            const hexSlots = container.querySelectorAll('.hex-slot');
+            const centers = {};
+            hexSlots.forEach(slot => {
+                const rect = slot.getBoundingClientRect();
+                centers[slot.dataset.slot] = {
+                    x: rect.left + rect.width / 2 - containerRect.left,
+                    y: rect.top + rect.height - containerRect.top
+                };
+            });
+
+            const chemResult = calcChemForSlots(slots);
+
+            gridConnections.forEach(([a, b]) => {
+                if (!centers[a] || !centers[b]) return;
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', centers[a].x);
+                line.setAttribute('y1', centers[a].y);
+                line.setAttribute('x2', centers[b].x);
+                line.setAttribute('y2', centers[b].y);
+                line.setAttribute('stroke-width', '3');
+
+                const lc = chemResult.lineChems.find(l => l.a === a && l.b === b);
+                const chem = lc ? lc.chem : null;
+                if (chem === null) line.setAttribute('stroke', 'rgba(255,255,255,0.25)');
+                else if (chem === 0) line.setAttribute('stroke', '#ef4444');
+                else if (chem === 1) line.setAttribute('stroke', '#f59e0b');
+                else if (chem === 2) line.setAttribute('stroke', '#4ade80');
+                else line.setAttribute('stroke', '#3b82f6');
+
+                svg.appendChild(line);
+            });
+        }
+
+        // ── Tab switching ──
+        let solutionSlots = {};
+
+        function switchResultsTab(tab) {
+            const myteamTab = document.getElementById('tab-myteam');
+            const solutionTab = document.getElementById('tab-solution');
+            const myteamGrid = document.getElementById('results-grid-myteam');
+            const solutionGrid = document.getElementById('results-grid-solution');
+
+            if (tab === 'myteam') {
+                myteamTab.classList.add('active');
+                solutionTab.classList.remove('active');
+                myteamGrid.classList.remove('hidden');
+                solutionGrid.classList.add('hidden');
+
+                const talent = calcTalent(draftedSlots);
+                const chemResult = calcChemForSlots(draftedSlots);
+                const total = talent + chemResult.totalChem;
+                document.getElementById('results-talent').textContent = talent;
+                document.getElementById('results-chem').textContent = chemResult.totalChem;
+                document.getElementById('results-total').textContent = total;
+
+                requestAnimationFrame(() => drawResultsLines('myteam', draftedSlots));
+            } else {
+                solutionTab.classList.add('active');
+                myteamTab.classList.remove('active');
+                solutionGrid.classList.remove('hidden');
+                myteamGrid.classList.add('hidden');
+
+                const talent = calcTalent(solutionSlots);
+                const chemResult = calcChemForSlots(solutionSlots);
+                const total = talent + chemResult.totalChem;
+                document.getElementById('results-talent').textContent = talent;
+                document.getElementById('results-chem').textContent = chemResult.totalChem;
+                document.getElementById('results-total').textContent = total;
+
+                requestAnimationFrame(() => drawResultsLines('solution', solutionSlots));
+            }
+        }
+
+        // ── Init ──
+        document.addEventListener('DOMContentLoaded', () => {
+            // Calculate scores
+            const userTalent = calcTalent(draftedSlots);
+            const userChemResult = calcChemForSlots(draftedSlots);
+            const userTotal = userTalent + userChemResult.totalChem;
+
+            // Find optimal solution
+            solutionSlots = findOptimalArrangement();
+            const solTalent = calcTalent(solutionSlots);
+            const solChemResult = calcChemForSlots(solutionSlots);
+            const solTotal = solTalent + solChemResult.totalChem;
+
+            // Accuracy
+            const accuracy = solTotal > 0 ? Math.round((userTotal / solTotal) * 100) : 100;
+            document.getElementById('results-accuracy').textContent = accuracy + '%';
+            document.getElementById('results-max-score').textContent = solTotal;
+
+            // Build grids
+            buildResultsGrid('results-grid-myteam', draftedSlots);
+            buildResultsGrid('results-grid-solution', solutionSlots);
+
+            // Show my team tab
+            switchResultsTab('myteam');
+
+            // Draw lines
+            requestAnimationFrame(() => {
+                drawResultsLines('myteam', draftedSlots);
+                drawResultsLines('solution', solutionSlots);
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            drawResultsLines('myteam', draftedSlots);
+            drawResultsLines('solution', solutionSlots);
+        });
+    </script>
+    {% if waiting_battle_id %}
+    <script>
+        setInterval(() => {
+            fetch('/api/vs/{{ waiting_battle_id }}/status/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'completed') {
+                    window.location.href = '/vs/{{ waiting_battle_id }}/results/';
+                }
+            });
+        }, 5000);
+    </script>
+    {% endif %}
 </body>
 </html>

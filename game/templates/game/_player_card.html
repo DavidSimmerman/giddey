@@ -1,0 +1,26 @@
+{% comment %}
+Reusable player card partial. Expects a `player` variable in context.
+Renders a hexagon card with team logo, player photo, position badge,
+name, division, draft year, and V-shaped stars.
+
+Usage: {% include "game/_player_card.html" with player=pick.player %}
+{% endcomment %}
+<div class="card-inner">
+    <div class="card-upper">
+        <img class="team-logo-bg" src="{{ player.team.logo_image }}" alt="" onerror="this.style.display='none'">
+        <img class="player-photo" src="{{ player.image }}" alt="" onerror="this.style.display='none'">
+    </div>
+    <div class="card-badge-row">
+        <div class="position-badge">{{ player.position }}</div>
+    </div>
+    <div class="card-lower">
+        <div class="player-name">{{ player.first_name.0 }}. {{ player.last_name|upper }}</div>
+        <div class="player-division">{{ player.team.division }}</div>
+        <div class="player-year">{{ player.draft_year }}</div>
+        <div class="stars">
+            {% for s in "12345" %}
+                <span class="star">{% if forloop.counter <= player.star_count %}&#9733;{% else %}&#9734;{% endif %}</span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
